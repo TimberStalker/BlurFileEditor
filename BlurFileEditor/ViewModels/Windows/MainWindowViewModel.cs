@@ -40,6 +40,15 @@ public class MainWindowViewModel : ViewModelBase
             {
                 return;
             }
+            var existingEditor = OpenEditors.FirstOrDefault(e => e.Info == info);
+
+            if (existingEditor != null)
+            {
+                SelectedTab = OpenEditors.IndexOf(existingEditor);
+                UpdateProperty(nameof(SelectedTab));
+                return;
+            }
+
             var editor = FileEditor.CreateFileEditorFor(info);
             if(editor is null)
             {
