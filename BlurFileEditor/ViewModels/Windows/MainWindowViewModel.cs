@@ -80,4 +80,14 @@ public class MainWindowViewModel : ViewModelBase
             }
         });
     }
+
+    public void MoveEditorTo(int originalIndex, int destinationIndex)
+    {
+        var swappedEditor = OpenEditors[originalIndex];
+        OpenEditors.RemoveAt(originalIndex);
+        OpenEditors.Insert(destinationIndex, swappedEditor);
+        SelectedTab = destinationIndex;
+        UpdateProperty(nameof(OpenEditors));
+        UpdateProperty(nameof(SelectedTab));
+    }
 }

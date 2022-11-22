@@ -8,15 +8,15 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFileEditor.Editors;
-[FileEditor(".loc")]
-public class LocEditor : FileEditor
+[FileEditor(".bin")]
+internal class BinEditor : FileEditor
 {
     object editorContent;
-    public LocEditor(FileSystemInfo info) : base(info)
+    public BinEditor(FileSystemInfo info) : base(info)
     {
-        var editorPage = new LocEditorPage();
+        var editorPage = new BinEditorPage();
 
-        var model = (LocEditorViewModel)editorPage.DataContext;
+        var model = (BinEditorViewModel)editorPage.DataContext;
         model.SetFileSource(info);
 
         this.editorContent = editorPage;

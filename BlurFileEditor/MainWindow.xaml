@@ -8,6 +8,7 @@
         xmlns:pages="clr-namespace:BlurFileEditor.Pages"
         xmlns:editors="clr-namespace:BlurFileEditor.Editors"
         xmlns:dv="clr-namespace:BlurFileEditor.Controls.DirectoryViewer"
+        xmlns:drag="clr-namespace:BlurFileEditor.Utils.Dragging"
         mc:Ignorable="d"
         xmlns:debug="debug-mode"
         Title="MainWindow" Height="650" Width="1200"
@@ -65,7 +66,23 @@
             <ToolBarTray Grid.Row="1" Grid.ColumnSpan="3" Background="Transparent">
                 <ToolBar Background="Transparent"/>
             </ToolBarTray>
-            <TabControl SelectedIndex="{Binding SelectedTab, Mode=TwoWay}" Grid.Row="2" ItemsSource="{Binding OpenEditors}">
+            <TabControl x:Name="EditorTabControl" SelectedIndex="{Binding SelectedTab, Mode=TwoWay}" Grid.Row="2" ItemsSource="{Binding OpenEditors}">
+                <TabControl.ItemContainerStyle>
+                    <Style TargetType="TabItem">
+                        <Setter Property="AllowDrop" Value="True"/>
+                        <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
+                        <EventSetter Event="Drop" Handler="TabItem_Drop"/>
+                        <Setter Property="drag:DragAdorner.AdornerTemplate">
+                            <Setter.Value>
+                                <DataTemplate>
+                                    <Border>
+                                        <Label Content="{Binding Name}"/>
+                                    </Border>
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TabControl.ItemContainerStyle>
                 <TabControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type editors:FileEditor}">
                         <DockPanel Height="20">
@@ -76,7 +93,7 @@
                 </TabControl.ItemTemplate>
                 <TabControl.ContentTemplate>
                     <ItemContainerTemplate>
-                        <Frame Content="{Binding EditorContent}">
+                        <Frame NavigationUIVisibility="Hidden" Content="{Binding EditorContent}">
                         </Frame>
                     </ItemContainerTemplate>
                 </TabControl.ContentTemplate>
