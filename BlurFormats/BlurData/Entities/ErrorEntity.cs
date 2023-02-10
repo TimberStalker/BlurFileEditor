@@ -5,10 +5,20 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Entities;
-public class ErrorEntity : Entity
+public class ErrorEntity : IEntity
 {
-    new public Exception Value => (Exception)base.Value;
-    public ErrorEntity(DataType dataType, Exception value) : base(dataType, value)
+    public Exception Value { get; }
+
+    object IEntity.Value => Value.Message;
+
+    public Guid Guid { get; }
+
+    public DataType Type { get; }
+
+    public ErrorEntity(DataType dataType, Exception value)
     {
+        Guid = Guid.NewGuid();
+        Type = dataType;
+        Value = value;
     }
 }

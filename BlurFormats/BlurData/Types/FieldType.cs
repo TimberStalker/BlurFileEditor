@@ -13,6 +13,7 @@ public enum FieldType
     Struct = 3,
     Pointer = 4,
     ExternalPointer = 5,
+    EnumValue = 6,
     PrimitiveArray = 256,
     EnumArray = 257,
     StructArray = 259,

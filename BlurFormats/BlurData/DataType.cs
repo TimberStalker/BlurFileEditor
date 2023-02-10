@@ -1,28 +1,76 @@
-﻿using System;
+﻿using BlurFormats.BlurData.Entities;
+using BlurFormats.BlurData.Types;
+using BlurFormats.Utils;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Windows;
 using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace BlurFormats.BlurData;
-[DebuggerDisplay("{Name} Items:{Fields.Count}   Parent:{Parent?.Name ?? \"None\"}   Read:{ReadType}   Decode:{DecodeType}   Size:{Size}")]
-public class DataType
+public sealed class DataType : INotifyPropertyChanged
 {
-    public string Name { get; set; }
-    public DataType? Parent { get; set; }
-    public ReadType ReadType { get; private set; }
-    public DecodeType DecodeType { get; private set; }
-    public ushort Size { get; private set; }
-    public List<DataField> Fields { get; }
-    public DataType(string name, ushort readType, ushort decodeType, ushort size)
+    string name = "", formatString = "";
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string Name 
+    { 
+        get => name;
+        set
+        {
+            name = value;
+            OnPropertyChanged(nameof(Name));
+        }
+    }
+    public DataField? this[string name] => GetField(name);
+    public DataType? Base { get; set; }
+    public StructureType StructureType { get; private set; }
+    public PrimitiveType PrimitiveType { get; private set; }
+    public ObservableCollection<DataField> Fields { get; }
+    public string FormatString 
+    { 
+        get => formatString; 
+        set
+        {
+            formatString = value;
+            OnPropertyChanged(nameof(FormatString));
+        }
+    }
+
+    public int Size => StructureType switch
+    {
+        StructureType.Primitive => 4,
+        StructureType.Enum => 4,
+        StructureType.Flags => 4,
+        StructureType.Struct => (Base?.Size ?? 0) + Fields.Sum(f => f.Size),
+        _ => 4
+    };
+
+    public DataType(string name, StructureType structureType, PrimitiveType primitiveType)
     {
         Fields = new();
         Name = name;
-        ReadType = (ReadType)readType;
-        DecodeType = (DecodeType)decodeType;
-        Size = size;
+        StructureType = structureType;
+        PrimitiveType = primitiveType;
     }
+    public int GetOffset(DataField field)
+    {
+        int offset = Base?.Size ?? 0;
 
+        if (Fields.Contains(field))
+        {
+            return offset + Fields.IndexOf(field);
+        }
+
+        return -1;
+    }
+    public DataField? GetField(string name) => Fields.FirstOrDefault(f => f.Name == name);
+    public bool IsSubclassOf(DataType type) => this == type ? true : Base?.IsSubclassOf(type) ?? false;
     public override string ToString() => Name;
+    public void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

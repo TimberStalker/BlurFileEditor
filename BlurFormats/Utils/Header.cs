@@ -9,7 +9,11 @@ public struct Header : IReadable
 {
     public int Start { get; private set; }
     public int Length { get; private set; }
-
+    public Header(int start, int length)
+    {
+        Start = start;
+        Length = length;
+    }
     public void Read(ref Reader reader)
     {
         Start = reader.ReadInt();

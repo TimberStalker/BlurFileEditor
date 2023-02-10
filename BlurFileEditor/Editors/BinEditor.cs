@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace BlurFileEditor.Editors;
 [FileEditor(".bin")]
@@ -17,7 +18,15 @@ internal class BinEditor : FileEditor
         var editorPage = new BinEditorPage();
 
         var model = (BinEditorViewModel)editorPage.DataContext;
-        model.SetFileSource(info);
+        try
+        {
+            model.SetPage(editorPage);
+            model.SetFileSource(info);
+
+        } catch(Exception ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
 
         this.editorContent = editorPage;
     }

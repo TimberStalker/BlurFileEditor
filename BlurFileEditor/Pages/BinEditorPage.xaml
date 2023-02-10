@@ -3,21 +3,79 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:sys="clr-namespace:System;assembly=mscorlib"
       xmlns:local="clr-namespace:BlurFileEditor.Pages"
       xmlns:bin="clr-namespace:BlurFormats.BlurData;assembly=BlurFormats"
       xmlns:db="clr-namespace:BlurFileEditor.ViewModels.DesignerViewModels.Pages"
       xmlns:b="clr-namespace:BlurFileEditor.Behaviors"
+      xmlns:con="clr-namespace:BlurFileEditor.Controls.ComboBox"
+      xmlns:c="clr-namespace:BlurFileEditor.Resources.Converters"
       xmlns:e="clr-namespace:BlurFormats.BlurData.Entities;assembly=BlurFormats"
       xmlns:vm="clr-namespace:BlurFileEditor.ViewModels.Pages"
       mc:Ignorable="d" 
       d:DataContext="{d:DesignInstance IsDesignTimeCreatable=True, Type=db:DesignerBinEditorModel}"
       d:DesignHeight="650" d:DesignWidth="1000"
       FontFamily="CascadiaMono"
-      Title="BinEditor">
+      Background="White"
+      Title="BinEditor"
+      x:Name="MainEditorPage">
     <Page.DataContext>
-        <vm:BinEditorViewModel/>
+        <vm:BinEditorViewModel x:Name="ViewModel"/>
     </Page.DataContext>
     <Page.Resources>
+        <c:EntityToResourceKeyConverter x:Key="EntityToResourceKeyConverter"/>
+        <c:FieldToDataTypeDisplayConverter x:Key="FieldToDataTypeDisplayConverter"/>
+        <c:EntityToExtraDataConverter x:Key="EntityToExtraDataConverter"/>
+        <c:EntityToStringFormatList x:Key="EntityToStringFormatList"/>
+        <c:EntityTypeHasValueConverter x:Key="EntityTypeHasValueConverter"/>
+        <c:FieldHasDataTypeDisplayConverter x:Key="FieldHasDataTypeDisplayConverter"/>
+        <c:TreeViewItemHasBorderConverter x:Key="TreeViewItemHasBorderConverter"/>
+        <c:ValueImplementsTypeConverter x:Key="ValueImplementsTypeConverter"/>
+        <c:GetValueTypeConverter x:Key="GetValueTypeConverter"/>
+        <b:EntityInternalTemplateSelector x:Key="EntityInternalTemplateSelector"/>
+
+        <DataTemplate x:Key="DefaultEntityTemplate">
+            <TextBox Text="{Binding ., Mode=OneWay}"/>
+        </DataTemplate>
+        
+        <DataTemplate x:Key="{x:Type e:StringContainer}" DataType="e:StringEntity">
+            <DockPanel>
+                <Label Content="&quot;" DockPanel.Dock="Left"/>
+                <Label Content="&quot;" DockPanel.Dock="Right"/>
+                <TextBox Text="{Binding Value.Value}" MinWidth="100"/>
+            </DockPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="{x:Type sys:Boolean}" DataType="e:IEntity">
+            <CheckBox IsChecked="{Binding Value}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="{x:Type e:EnumEntity}" DataType="e:EnumEntity">
+            <ComboBox SelectedIndex="{Binding Value}" MinWidth="50" Padding="2"
+                      VerticalContentAlignment="Center" ItemsSource="{Binding Type.Fields}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="{x:Type e:FlagsEnumEntity}" DataType="e:FlagsEnumEntity">
+            <con:MultiSelectComboBox SelectedIndicies="{Binding Value}" MinWidth="50" Padding="2" MaxWidth="120"
+                      VerticalContentAlignment="Center" ItemsSource="{Binding Type.Fields}"/>
+        </DataTemplate>
+
+        <DataTemplate x:Key="{x:Type e:ObjectEntity}" DataType="{x:Type e:ObjectEntity}">
+            <ItemsControl ItemsSource="{Binding ., Converter={StaticResource EntityToStringFormatList}}" 
+                          VerticalAlignment="Center">
+                <ItemsControl.Resources>
+                    <DataTemplate DataType="{x:Type sys:String}">
+                        <TextBlock Text="{Binding .}" Padding="0"/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type e:IEntity}">
+                        <ContentControl Content="{Binding .}" ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}"/>
+                    </DataTemplate>
+                </ItemsControl.Resources>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </DataTemplate>
+
     </Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -28,72 +86,229 @@
         <Grid.RowDefinitions>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TreeView ItemsSource="{Binding Bin.Entities}" HorizontalContentAlignment="Stretch">
+        <DockPanel>
+            <DockPanel DockPanel.Dock="Bottom" LastChildFill="False">
+                <Button Content="&lt;&lt;" Command="{Binding MaxDecrementPageCommand}"/>
+                <Button Content="&lt;" Command="{Binding DecrementPageCommand}"/>
+                <Label>
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0:000}/{1:000}">
+                                <Binding Path="VisiblePage"/>
+                                <Binding Path="TotalPages"/>
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </Label>
+                <Button Content="&gt;" Command="{Binding IncrementPageCommand}"/>
+                <Button Content="&gt;&gt;" Command="{Binding MaxIncrementPageCommand}"/>
+            </DockPanel>
+            <TreeView ItemsSource="{Binding TreeRecords}" HorizontalContentAlignment="Stretch" >
+                <TreeView.Resources>
+                    <HierarchicalDataTemplate DataType="{x:Type e:ObjectEntityItem}" ItemsSource="{Binding Value.Value}">
+                        <DockPanel LastChildFill="False">
+                            <Label Content="{Binding Field, Converter={StaticResource FieldToDataTypeDisplayConverter}}" Padding="0"/>
+                            <Label Content="{Binding Field.Name}" Padding="0"/>
+                            <Label Content="=" Visibility="{Binding Value, Converter={StaticResource EntityTypeHasValueConverter}}"/>
+                            <ContentControl ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}" Content="{Binding Value}" Margin="3"/>
+                            <Label Content="{Binding Value, Converter={StaticResource EntityToExtraDataConverter}}"/>
+                        </DockPanel>
+                    </HierarchicalDataTemplate>
+
+                    <HierarchicalDataTemplate DataType="{x:Type e:ArrayEntityItem}" ItemsSource="{Binding Entity.Entity.Value}">
+                        <DockPanel LastChildFill="False">
+                            <Label Content="{Binding Index}" ContentStringFormat="[{0}]" Padding="0"/>
+                            <Label Content="{Binding Entity.Entity.Type.Name}" Padding="0"/>
+                            <Label Content="=" Visibility="{Binding Entity, Converter={StaticResource EntityTypeHasValueConverter}}" Padding="0"/>
+                            <ContentControl ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}" Content="{Binding Entity.Entity}" Margin="3"/>
+                            <Label Content="{Binding Entity, Converter={StaticResource EntityToExtraDataConverter}}" Padding="0"/>
+                        </DockPanel>
+                    </HierarchicalDataTemplate>
+
+                    <HierarchicalDataTemplate DataType="{x:Type bin:BlurRecord}" 
+                                  ItemsSource="{Binding Entity.Value}">
+                        <DockPanel LastChildFill="False">
+                            <Label Content="{Binding Entity.Type.Name}" DockPanel.Dock="Left" Padding="0"/>
+                            <Label Content="{Binding ID}" DockPanel.Dock="Right" Padding="0"/>
+                        </DockPanel>
+                    </HierarchicalDataTemplate>
+                    <Style x:Key="{x:Type TextBox}" TargetType="{x:Type TextBox}">
+                        <Style.Setters>
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="MinWidth" Value="25"/>
+                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Height" Value="16"/>
+                        </Style.Setters>
+                    </Style>
+                    <Style x:Key="{x:Type Label}" TargetType="{x:Type Label}">
+                        <Style.Setters>
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="3"/>
+                            <Setter Property="Padding" Value="0"/>
+                        </Style.Setters>
+                    </Style>
+                </TreeView.Resources>
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource ExpandableItemTreeView}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ., Converter={StaticResource GetValueTypeConverter}}"
+                                         Value="{x:Type bin:BlurRecord}">
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <ContextMenu>
+                                            <MenuItem Header="Inspect" Command="{Binding InspectRecordCommand, ElementName=ViewModel}" CommandParameter="{Binding .}" Focusable="False"/>
+                                        </ContextMenu>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                        <Setter Property="ContextMenu">
+                            <Setter.Value>
+                                <ContextMenu>
+                                    <MenuItem Header="{Binding Field.Name}" Focusable="False"/>
+                                    <MenuItem Header="{Binding Field.FieldType}" Focusable="False"/>
+                                    <Separator/>
+                                    <MenuItem Header="{Binding Value.Type}" Focusable="False"/>
+                                </ContextMenu>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+        </DockPanel>
+        <GridSplitter Grid.Column="1" Width="3" VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
+        <TreeView ItemsSource="{Binding Bin.DataTypes}" Grid.Column="2">
             <TreeView.Resources>
-                <DataTemplate DataType="{x:Type e:Entity}">
-                    <StackPanel Orientation="Horizontal">
-                        <Label Content="{Binding DataType.Name}"/>
-                        <Label Content="{Binding DataField.Name}"/>
-                        <Label Content="="/>
-                        <Label Content="{Binding Value}"/>
-                    </StackPanel>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type e:StringEntity}">
-                    <StackPanel Orientation="Horizontal">
-                        <Label Content="{Binding DataType.Name}"/>
-                        <Label Content="{Binding DataField.Name}"/>
-                        <Label Content="="/>
-                        <Label Content='"' Margin="0"/>
-                        <TextBox BorderThickness="0" Padding="0" Margin="0" VerticalContentAlignment="Center" Text="{Binding Value}"/>
-                        <Label Content='"' Margin="0"/>
-                    </StackPanel>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type e:EnumEntity}">
-                    <StackPanel Orientation="Horizontal">
-                        <Label Content="{Binding DataType.Name}"/>
-                        <Label Content="{Binding DataField.Name}"/>
-                        <Label Content="="/>
-                        <ComboBox SelectedIndex="{Binding Value}" VerticalContentAlignment="Center" ItemsSource="{Binding DataType.Fields}"/>
-                    </StackPanel>
-                </DataTemplate>
-                <HierarchicalDataTemplate DataType="{x:Type e:ArrayEntity}" ItemsSource="{Binding Value}">
-                    <StackPanel Orientation="Horizontal">
-                        <Label Content="{Binding DataType.Name}" ContentStringFormat="{}{0}[]"/>
-                        <Label Content="{Binding DataField.Name}"/>
-                    </StackPanel>
+                <HierarchicalDataTemplate DataType="{x:Type bin:DataType}" ItemsSource="{Binding Fields}">
+                    <DockPanel LastChildFill="False">
+                        <TextBlock Padding="2" Margin="0,2">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} {1}">
+                                    <Binding Path="StructureType"/>
+                                    <Binding Path="Name"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <DockPanel VerticalAlignment="Center">
+                            <TextBlock Text=" : "/>
+                            <TextBlock Text="{Binding Base.Name}"/>
+                            <DockPanel.Style>
+                                <Style TargetType="DockPanel">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Base}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DockPanel.Style>
+                        </DockPanel>
+                    </DockPanel>
                 </HierarchicalDataTemplate>
-                <HierarchicalDataTemplate DataType="{x:Type e:ObjectEntity}" ItemsSource="{Binding Fields}">
-                    <StackPanel Orientation="Horizontal">
-                        <Label Content="{Binding DataType.Name}"/>
-                        <Label Content="{Binding DataField.Name}"/>
-                    </StackPanel>
-                </HierarchicalDataTemplate>
+                <DataTemplate DataType="{x:Type bin:DataField}">
+                    <DockPanel HorizontalAlignment="Stretch">
+                        <TextBlock Text="{Binding ., Converter={StaticResource FieldToDataTypeDisplayConverter}}"
+                                   Margin="0,0,5,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding DataContext,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="{x:Type bin:DataType}"/>
+                                                <Condition Binding="{Binding DataContext.StructureType,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="1"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <MultiDataTrigger.Setters>
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </MultiDataTrigger.Setters>
+                                        </MultiDataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding DataContext,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="{x:Type bin:DataType}"/>
+                                                <Condition Binding="{Binding DataContext.StructureType,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="2"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <MultiDataTrigger.Setters>
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </MultiDataTrigger.Setters>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding Name, StringFormat='{}{0};'}" MaxWidth="250"/>
+                    </DockPanel>
+                </DataTemplate>
             </TreeView.Resources>
             <TreeView.ItemContainerStyle>
-                <Style TargetType="TreeViewItem">
-                    <Setter Property="ContextMenu">
+                <Style TargetType="{x:Type TreeViewItem}">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="HorizontalContentAlignment" Value="{Binding Path=HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"/>
+                    <Setter Property="VerticalContentAlignment" Value="{Binding Path=VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"/>
+                    <Setter Property="Padding" Value="1,0,0,0"/>
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource TreeViewItemFocusVisual}"/>
+                    <Setter Property="Template">
                         <Setter.Value>
-                            <ContextMenu>
-                                <MenuItem Header="{Binding EntityType.Name}" Focusable="False"/>
-                                <Separator/>
-                                <MenuItem Header="{Binding DataField.Name}" Focusable="False"/>
-                                <MenuItem Header="{Binding DataField.Offset}" Focusable="False"/>
-                                <MenuItem Header="{Binding DataField.ReadType}" Focusable="False"/>
-                                <Separator/>
-                                <MenuItem Header="{Binding DataType.Name}" Focusable="False"/>
-                                <MenuItem Header="{Binding DataType.ReadType}" Focusable="False"/>
-                                <MenuItem Header="{Binding DataType.DecodeType}" Focusable="False"/>
-                                <MenuItem Header="{Binding DataType.Size}" Focusable="False"/>
-                                <MenuItem Header="{Binding DataType.Parent.Name}" Focusable="False"/>
-                                <Separator/>
-                                <MenuItem Header="{Binding Range}" Focusable="False"/>
-                            </ContextMenu>
+                            <ControlTemplate TargetType="{x:Type TreeViewItem}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition MinWidth="19" Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    <ToggleButton x:Name="Expander" Style="{StaticResource ExpandCollapseToggleStyle}" ClickMode="Press" IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                    <Border x:Name="Bd" SnapsToDevicePixels="true" Grid.Column="1" Grid.ColumnSpan="2" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter x:Name="PART_Header" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" ContentSource="Header"/>
+                                    </Border>
+                                    <Border Grid.Column="1" Grid.Row="1" BorderBrush="Transparent" BorderThickness="0" CornerRadius="0" Padding="0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding .}" Value="true">
+                                                        <Setter Property="BorderThickness" Value=".5"/>
+                                                        <Setter Property="BorderBrush" Value="Black"/>
+                                                        <Setter Property="CornerRadius" Value="5"/>
+                                                        <Setter Property="Padding" Value="5"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <ItemsPresenter x:Name="ItemsHost"/>
+                                    </Border>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsExpanded" Value="false">
+                                        <Setter Property="Visibility" TargetName="ItemsHost" Value="Collapsed"/>
+                                    </Trigger>
+                                    <Trigger Property="HasItems" Value="false">
+                                        <Setter Property="Visibility" TargetName="Expander" Value="Hidden"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="true">
+                                        <Setter Property="Background" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    </Trigger>
+                                    <MultiTrigger>
+                                        <MultiTrigger.Conditions>
+                                            <Condition Property="IsSelected" Value="true"/>
+                                            <Condition Property="IsSelectionActive" Value="false"/>
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="Background" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                                    </MultiTrigger>
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
                         </Setter.Value>
                     </Setter>
                 </Style>
             </TreeView.ItemContainerStyle>
         </TreeView>
-        <GridSplitter Grid.Column="1" Width="3" VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
-        <TextBox Grid.Column="2" Text="{Binding BinTypesText, Mode=TwoWay}" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
     </Grid>
 </Page>

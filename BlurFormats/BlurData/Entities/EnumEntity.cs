@@ -5,20 +5,22 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Entities;
-public class EnumEntity : Entity
+public class EnumEntity : IEntity
 {
-    new public int Value
+    public int Value { get; set; }
+
+    object IEntity.Value => Value;
+
+    public Guid Guid { get; }
+
+    public DataType Type { get; }
+
+    public EnumEntity(DataType dataType, int value)
     {
-        get => (int)base.Value; 
-        set
-        {
-            base.Value = value;
-            UpdateProperty(nameof(Value));
-        }
-    }
-    public EnumEntity(DataType dataType, int value) : base(dataType, value)
-    {
+        Guid = Guid.NewGuid();
+        Type = dataType;
+        Value = value;
     }
 
-    public override string ToString() => $"{DataType.Name} {DataField?.Name} = {Value}";
+    public override string ToString() => $"{Type.Name} : {Value}";
 }

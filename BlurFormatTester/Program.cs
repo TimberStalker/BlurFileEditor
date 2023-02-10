@@ -1,16 +1,32 @@
 ﻿using BlurFormats.BlurData;
 using BlurFormats.Loc;
+using BlurFormats.Utils;
+using System.Text;
+using System.Xml;
+
+var stream = File.Open(@"C:\Users\ChrisG\Desktop\BlurModified\gamedata\xt\racingphysics.bin", FileMode.Open, FileAccess.Read);
+var data = BlurData.Deserialize(stream);
+;
+//var originalData = File.ReadAllBytes(@"C:\Users\ChrisG\Desktop\BlurModified\gamedata\xt\amax.bin");
+//var blurData = BlurData.Deserialize(originalData);
+//var writer = XmlWriter.Create(Console.Out, new XmlWriterSettings()
+//{
+//    Indent = true,
+//});
+//blurData.WriteXml(writer);
+//writer.Close();
+
 
 //var filepath = "C:\\Users\\MyName\\Desktop\\BlurModified\\gamedata\\bklgi5q22\\bklgi5q22toc.bin";
-var filepath = "C:\\Users\\MyName\\Desktop\\BlurModified\\gamedata\\xt\\pickups.bin";
+//var filepath = "C:\\Users\\ChrisG\\Desktop\\BlurModified\\gamedata\\xt\\pickups.bin";
 //var filepath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "crowd.bin");
-if (filepath != null)
-{
+//if (filepath != null)
+//{
     //var block = BinBlock.FromBytes(File.ReadAllBytes(filepath));
     //block.PrintTypes(Console.Out);
-    var loc = BlurData.FromBytes(File.ReadAllBytes(filepath));
+    //var loc = BlurData.Deserialize(File.ReadAllBytes(filepath));
     //loc.PrintTypes(Console.Out);
-}
+//}
 
 //var loc = new Localization();
 //loc.Languages.Add(new Localization.Language() { Name = "en" });

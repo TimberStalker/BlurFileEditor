@@ -9,6 +9,6 @@ public enum StructureType
 {
     Primitive = 0,
     Enum = 1,
-    FlagsEnum = 2,
+    Flags = 2,
     Struct = 3,
 }

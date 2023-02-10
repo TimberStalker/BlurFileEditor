@@ -6,11 +6,19 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Entities;
-public class EntityBlock
+public class EntityBlock : IEntity
 {
-    public List<List<Entity>> Entities { get; } = new List<List<Entity>>();
-    public byte[]? ExtraBytes { get; set; }
-    public EntityBlock()
+    public List<IEntity> Value { get; }
+
+    object IEntity.Value => Value;
+    public Guid Guid { get; }
+
+    public DataType Type { get; set; }
+
+    public EntityBlock(DataType dataType)
     {
+        Guid = Guid.NewGuid();
+        Type = dataType;
+        Value = new List<IEntity>();
     }
 }

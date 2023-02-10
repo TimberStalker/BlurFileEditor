@@ -1,30 +1,42 @@
 ﻿using BlurFormats.BlurData.Entities;
 using BlurFormats.BlurData.Entities.Pointers;
 using BlurFormats.BlurData.Read;
+using BlurFormats.BlurData.Types;
 using BlurFormats.Utils;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
-using System.Drawing;
-using System.Linq;
+using System.Globalization;
+using System.IO;
+using System.IO.Pipes;
+using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 
 namespace BlurFormats.BlurData;
-public class BlurData
+public sealed class BlurData : IXmlSerializable
 {
     public ObservableCollection<DataType> DataTypes { get; } = new ObservableCollection<DataType>();
-    public ObservableCollection<Entity> Entities { get; } = new ObservableCollection<Entity>();
+    public ObservableCollection<BlurRecord> Records { get; } = new ObservableCollection<BlurRecord>();
+    public BlurData()
+    {
 
+    }
+    public BlurData(IEnumerable<DataType> dataTypes, IEnumerable<BlurRecord> records)
+    {
+        foreach (var item in dataTypes) DataTypes.Add(item);
+        foreach (var item in records) Records.Add(item);
+    }
     public void PrintTypes(TextWriter writeTo)
     {
         foreach (var type in DataTypes)
         {
-            if (type.ReadType is ReadType.Enum or ReadType.FlagsEnum)
+            if (type.StructureType is StructureType.Enum or StructureType.Flags)
             {
-                if ((int)type.ReadType == 2) writeTo.WriteLine("[Flags]");
+                if ((int)type.StructureType == 2) writeTo.WriteLine("[Flags]");
                 writeTo.WriteLine($"enum {type.Name}");
                 writeTo.WriteLine("{");
                 foreach (var field in type.Fields)
@@ -35,320 +47,177 @@ public class BlurData
             }
             else
             {
-                if(type.Fields.Count == 0) writeTo.Write("external ");
+                if (type.Fields.Count == 0) writeTo.Write("external ");
                 writeTo.Write($"struct {type.Name}");
-                if(type.Parent is not null)
+                if (type.Base is not null)
                 {
-                    writeTo.Write($" : {type.Parent.Name}");
+                    writeTo.Write($" : {type.Base.Name}");
                 }
                 writeTo.WriteLine("\n{");
                 foreach (var field in type.Fields)
                 {
-                    if ((int)field.ReadType < 256)
+                    if ((int)field.FieldType < 256)
                     {
-                        if ((int)field.ReadType >= 4)
+                        writeTo.WriteLine(field.FieldType switch
                         {
-                            writeTo.WriteLine($"\t{field.DataType!.Name}* {field.Name};");
-                        }
-                        else
-                        {
-                            writeTo.WriteLine($"\t{field.DataType!.Name} {field.Name};");
-                        }
+                            FieldType.ExternalPointer => $"\textern {field.DataType!.Name}* {field.Name}; // {field.FieldType}",
+                            FieldType.Pointer => $"\t{field.DataType!.Name}* {field.Name}; // {field.FieldType}",
+                            _ => $"\t{field.DataType!.Name} {field.Name}; // {field.FieldType}"
+                        });
                     }
                     else
                     {
-                        if ((int)field.ReadType == 259)
+                        writeTo.WriteLine(field.FieldType switch
                         {
-                            writeTo.WriteLine($"\t{field.DataType!.Name}*[] {field.Name};");
-                        }
-                        else
-                        {
-                            writeTo.WriteLine($"\t{field.DataType!.Name}[] {field.Name};");
-                        }
+                            FieldType.ExternalArray => $"\textern {field.DataType!.Name}*[] {field.Name}; // {field.FieldType}",
+                            FieldType.PointerArray => $"\t{field.DataType!.Name}*[] {field.Name}; // {field.FieldType}",
+                            _ => $"\t{field.DataType!.Name}[] {field.Name}; // {field.FieldType}"
+                        });
                     }
                 }
                 writeTo.WriteLine("}");
             }
         }
     }
-    //public static BlurData Deserialize(byte[] bytes)
-    //{
-    //    var reader = new Reader(bytes);
-    //    string format = reader.ReadString(4);
-    //    if (format != "KSLF") throw new Exception("Provided bytes are not of the KSLF(bin) format.");
-
-    //    int magicNumber = reader.ReadInt();
-    //    if (magicNumber != 2) throw new Exception($"Magic number is not correct. Should be '2' but instead is '{magicNumber}'.");
-
-    //    Header dataTypesHeader = reader.Read<Header>();
-    //    Header inheritenceHeader = reader.Read<Header>();
-    //    Header dataFieldsHeader = reader.Read<Header>();
-    //    Header typeNamesHeader = reader.Read<Header>();
-    //    Header recordssHeader = reader.Read<Header>();
-    //    Header entityNamesHeader = reader.Read<Header>();
-    //    Header block3Header = reader.Read<Header>();
-    //    Header dataBlockHeader = reader.Read<Header>();
-
-    //    var dataTypes = DeserializeDataTypes(ref reader, dataTypesHeader, inheritenceHeader, dataFieldsHeader, typeNamesHeader);
-    //}
-
-    //public static List<DataType> DeserializeDataTypes(ref Reader reader, Header dataTypesHeader, Header inheritenceHeader, Header dataFieldsHeader, Header typeNamesHeader)
-    //{
-    //    List<DataTypeDefinition> typeDefinitions = new List<DataTypeDefinition>();
-    //    List<int> inheritenceDefinitions = new List<int>();
-    //    List<DatafieldDefinition> fieldDefinitions = new List<DatafieldDefinition>();
-
-    //    for (int i = 0; i < dataTypesHeader.Length; i++)
-    //    {
-    //        typeDefinitions.Add(reader.Read<DataTypeDefinition>());
-    //    }
-    //    for (int i = 0; i < inheritenceHeader.Length; i++)
-    //    {
-    //        inheritenceDefinitions.Add(reader.ReadInt());
-    //    }
-    //    for (int i = 0; i < dataFieldsHeader.Length; i++)
-    //    {
-    //        fieldDefinitions.Add(reader.Read<DatafieldDefinition>());
-    //    }
-
-    //    string typeNames = reader.ReadStringDecrypted(typeNamesHeader.Length);
-
-    //    foreach (var typeDefinition in typeDefinitions)
-    //    {
-    //        var name = typeNames.GetTerminatedStringAtOffset(typeDefinition.StringOffset);
-    //    }
-    //}
-
-    public static BlurData FromBytes(byte[] bytes)
+    public unsafe static BlurData Deserialize(Stream stream)
     {
-        var reader = new Reader(bytes);
-        var read = DataRead.FromBytes(ref reader);
+        var deserializer = new BlurDataDeserializer(stream);
 
-        var result = new BlurData();
+        deserializer.DeserializeDataTypes();
+        deserializer.DeserializeRecords();
 
-        foreach (var dataType in read.DataTypeDefinitions)
-        {
-            result.DataTypes.Add(new DataType(read.StringsData.GetTerminatedStringAtOffset(dataType.StringOffset), dataType.StructureType, dataType.PrimitiveType, dataType.Size));
-        }
+        return deserializer.ToBlurData();
+    }
+    
+    public unsafe static void Serialize(BlurData blurData, Stream stream)
+    {
+        throw null;
+    }
 
-        int parentIndex = 0;
-        int typeIndex = 0;
-        foreach (var dataType in result.DataTypes)
-        {
-            if(read.DataTypeDefinitions[typeIndex].HasParent > 0)
-            {
-                dataType.Parent = result.DataTypes[read.UnknownDefinitions[parentIndex]];
-                parentIndex++;
-            }
-            typeIndex++;
-        }
-
-        List<DataField> dataFields = new();
-
-        foreach (var field in read.DataFieldDefinitions)
-        {
-            dataFields.Add(new DataField(read.StringsData.GetTerminatedStringAtOffset(field.StringOffset), field.ReadType, field.Offset, field.StructureType != ushort.MaxValue ? result.DataTypes[field.StructureType] : null));
-        }
-
-        int offset = 0;
-        for (int i = 0; i < result.DataTypes.Count; i++)
-        {
-            result.DataTypes[i].Fields.AddRange(dataFields.Skip(offset).Take(read.DataTypeDefinitions[i].ItemCount));
-            offset += read.DataTypeDefinitions[i].ItemCount;
-        }
-
-        var entitiesBlocks = new List<EntityBlock>();
-        var block3Enumerator = read.Block3Definitions.GetEnumerator();
-        foreach (var entityDefinition in read.EntityDefinitions)
-        {
-            if (entityDefinition.EntitySpecifics != -1)
-            {
-                var entitySpecifics = read.EntityNameDefinitions[entityDefinition.EntitySpecifics];
-                EntityBlock entity = new EntityBlock();
-                for (int i = 0; i < entitySpecifics.Length; i++)
-                {
-                    block3Enumerator.MoveNext();
-
-                    var block = block3Enumerator.Current;
-                    var readType = result.DataTypes[block.DataType];
-                    List<Entity> blockValueEntities = new List<Entity>();
-                    for (int j = 0; j < block.Count; j++)
-                    {
-                        switch (block.PointerType)
-                        {
-                            case 0:
-                                //var classReader = reader.Subreader(readType.Size);
-                                var entityData = ReadEntity(ref reader, readType, read.StringsData, result.DataTypes);
-                                blockValueEntities.Add(entityData);
-                                break;
-                            case 1:
-                                blockValueEntities.Add(new DoublePointerEntity(readType, (reader.ReadUShort(), reader.ReadUShort())));
-                                break;
-                            case 2:
-                                blockValueEntities.Add(new PointerEntity(readType, reader.ReadInt()));
-                                break;
-                            default:
-                                throw new Exception();
-                        }
-                    }
-                    entity.Entities.Add(blockValueEntities);
-                }
-                entity.ExtraBytes = reader.Read(entitySpecifics.Offset).ToArray();
-                entitiesBlocks.Add(entity);
-            }
-        }
-        foreach (var entityBlock in entitiesBlocks)
-        {
-            foreach (var entities in entityBlock.Entities)
-            {
-                foreach (var entity in entities)
-                {
-                    FillEntityFields(new PointerDataSource(entityBlock, entitiesBlocks, Reader.Decrypt(entityBlock.ExtraBytes)), entity);
-                }
-            }
-            result.Entities.Add(entityBlock.Entities[0][0]);
-        }
+    public unsafe static Stream Serialize(BlurData blurData)
+    {
+        var result = new MemoryStream();
+        Serialize(blurData, result);
         return result;
     }
-    private static void FillEntityFields(PointerDataSource pointerDataSource, Entity entity)
-    {
-        if(entity is ObjectEntity o)
-        {
-            for(int i = 0; i < o.Fields.Count; i++)
-            {
-                if(o.Fields[i] is IPointerEntity p)
-                {
-                    o.Fields[i] = p.GetReplacement(pointerDataSource);
-                }
-                else
-                {
-                    FillEntityFields(pointerDataSource, o.Fields[i]);
-                }
-            }
-        } else if (entity is ArrayEntity a)
-        {
-            for(int i = 0; i < a.Value.Count; i++)
-            {
-                if (a.Value[i] is IPointerEntity p)
-                {
-                    a.Value[i] = p.GetReplacement(pointerDataSource);
-                }
-                else
-                {
-                    FillEntityFields(pointerDataSource, a.Value[i]);
-                }
-            }
-        }
-    }
-    public static Entity ReadEntity(ref Reader reader, DataField readField, string stringPool, IReadOnlyList<DataType> dataTypes)
-    {
-        Entity entityResult;
-        switch (readField.ReadType)
-        {
-            case ReadType.Primitive:
-            case ReadType.Enum:
-            case ReadType.FlagsEnum:
-            case ReadType.Struct:
-                entityResult = ReadEntity(ref reader, readField.DataType!, stringPool, dataTypes);
-                entityResult.DataField = readField;
-                break;
-            case ReadType.Pointer:
-                entityResult = new PointerEntity(readField.DataType!, reader.ReadInt())
-                {
-                    DataField = readField,
-                };
-                break;
-            case ReadType.ExternalPointer:
-                entityResult = new ExternalPointerEntity(readField.DataType!, reader.ReadInt())
-                {
-                    DataField = readField,
-                };
-                break;
-            case ReadType.PrimitiveArray:
-            case ReadType.EnumArray:
-            case ReadType.StructArray:
-            case ReadType.PointerArray:
-                {
-                    var pointer = reader.ReadShort();
-                    var modifier = reader.ReadShort();
-                    var fieldLength = reader.ReadInt();
-                    entityResult = new ArrayPointerEntity(readField.DataType!, pointer, modifier, fieldLength)
-                    {
-                        DataField = readField
-                    };
-                }
-                break;
-            case ReadType.ExternalArray:
-                {
-                    var pointer = reader.ReadShort();
-                    var modifier = reader.ReadShort();
-                    var fieldLength = reader.ReadInt();
-                    entityResult = new ExternalArrayPointerEntity(readField.DataType!, pointer, modifier, fieldLength)
-                    {
-                        DataField = readField
-                    };
-                }
-                break;
-            case var c:
-                throw new Exception($"Unknown read type {c}");
-        }
-        return entityResult;
-    }
-    public static void AddEntityParentFields(ObjectEntity objectEntity, ref Reader reader, DataType readType, string stringPool, IReadOnlyList<DataType> dataTypes)
-    {
-        if (readType.Parent is not null) AddEntityParentFields(objectEntity, ref reader, readType.Parent, stringPool, dataTypes);
-        foreach (var field in readType.Fields)
-        {
-            objectEntity.Fields.Add(ReadEntity(ref reader, field, stringPool, dataTypes));
-        }
-    }
-    public static Entity ReadEntity(ref Reader reader, DataType readType, string stringPool, IReadOnlyList<DataType> dataTypes)
-    {
-        Entity entityResult;
-        switch (readType.ReadType)
-        {
-            case ReadType.Primitive:
-                int start = reader.Position;
-                entityResult = Decode(ref reader, readType);
-                entityResult.Range = start..reader.Position;
-                break;
-            case ReadType.Enum:
-                entityResult = new EnumEntity(readType, reader.ReadInt());
-                break;
-            case ReadType.FlagsEnum:
-                entityResult = new FlagsEnumEntity(readType, reader.ReadInt());
-                break;
-            case ReadType.Struct:
-                var objectEntity = new ObjectEntity(readType);
 
-                if (readType.Parent is not null) AddEntityParentFields(objectEntity, ref reader, readType.Parent, stringPool, dataTypes);
-                foreach (var field in readType.Fields)
-                {
-                    objectEntity.Fields.Add(ReadEntity(ref reader, field, stringPool, dataTypes));
-                }
-                entityResult = objectEntity;
-                break;
-            case var c:
-                throw new Exception($"Unknown read type {c}");
-        }
-        return entityResult;
-    }
-    public static Entity Decode(ref Reader reader, DataType readType) => readType.DecodeType switch
+    public XmlSchema? GetSchema()
     {
-        DecodeType.None => new NullEntity(readType),
-        DecodeType.Bool => new PrimitiveEntity<bool>(readType, reader.ReadInt() > 0),
-        DecodeType.Byte => new PrimitiveEntity<sbyte>(readType, (sbyte)reader.ReadInt()),
-        DecodeType.Short => new PrimitiveEntity<short>(readType, (short)reader.ReadInt()),
-        DecodeType.Integer => new PrimitiveEntity<int>(readType, reader.ReadInt()),
-        DecodeType.Long => new PrimitiveEntity<long>(readType, reader.ReadLong()),
-        DecodeType.UByte => new PrimitiveEntity<byte>(readType, (byte)reader.ReadInt()),
-        DecodeType.UShort => new PrimitiveEntity<ushort>(readType, (ushort)reader.ReadInt()),
-        DecodeType.UInt => new PrimitiveEntity<uint>(readType, reader.ReadUInt()),
-        DecodeType.ULong => new PrimitiveEntity<ulong>(readType, reader.ReadULong()),
-        DecodeType.Float => new PrimitiveEntity<float>(readType, reader.ReadFloat()),
-        DecodeType.Double => new PrimitiveEntity<double>(readType, reader.ReadDouble()),
-        DecodeType.String => new StringPointerEntity(readType, reader.ReadInt()),
-        DecodeType.Localaization => new LocPointerEntity(readType, reader.ReadInt()),
-        var i => throw new Exception($"{i} is not yet a handled decode type.")
-    };
+        throw new NotImplementedException();
+    }
+
+    public void ReadXml(XmlReader reader)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void WriteXml(XmlWriter writer)
+    {
+        writer.WriteStartElement("BlurData");
+
+        writer.WriteStartElement("Types");
+        foreach (var dataType in DataTypes)
+        {
+            writer.WriteStartElement("Type");
+            writer.WriteAttributeString("Name", dataType.Name);
+            writer.WriteAttributeString("StructType", dataType.StructureType.ToString());
+            writer.WriteAttributeString("PrimitiveType", dataType.PrimitiveType.ToString());
+            if(dataType.Base is not null)
+            {
+                writer.WriteAttributeString("Base", dataType.Base.Name);
+            }
+            
+            foreach (var field in dataType.Fields)
+            {
+                writer.WriteStartElement("Field");
+                writer.WriteAttributeString("Name", field.Name);
+                writer.WriteAttributeString("FieldType", field.FieldType.ToString());
+                if(field.DataType is not null)
+                {
+                    writer.WriteAttributeString("Type", field.DataType.Name);
+                }
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
+        writer.WriteEndElement();
+
+        writer.WriteStartElement("Records");
+        foreach (var record in Records)
+        {
+            writer.WriteStartElement("Record");
+            writer.WriteAttributeString("BaseType", record.BaseType.Name);
+            writer.WriteAttributeString("ID", record.ID.ToString());
+            List<IEntity> entities = new List<IEntity> { record.Entity };
+            for(int i = 0; i < entities.Count; i++)
+            {
+                WriteEntity(writer, entities[i], entities);
+            }
+            writer.WriteEndElement();
+        }
+        writer.WriteEndElement();
+
+        writer.WriteEndElement();
+    }
+
+    private static void WriteEntity(XmlWriter writer, IEntity entity, List<IEntity> entities)
+    {
+        //switch (entity)
+        //{
+        //    case ObjectEntity o:
+        //        writer.WriteStartElement("Object");
+        //        writer.WriteAttributeString("Type", o.DataType.Name);
+        //        foreach(var field in o.Fields)
+        //        {
+        //            switch (field.Field.FieldType)
+        //            {
+        //                case FieldType.Primitive:
+        //                case FieldType.Enum:
+        //                case FieldType.FlagsEnum:
+        //                case FieldType.EnumValue:
+        //                    WriteEntity(writer, field.Value, entities);
+        //                    break;
+        //                case FieldType.Struct:
+        //                    break;
+        //                case FieldType.Pointer:
+        //                    break;
+        //                case FieldType.ExternalPointer:
+        //                    break;
+        //                case FieldType.PrimitiveArray:
+        //                    break;
+        //                case FieldType.EnumArray:
+        //                    break;
+        //                case FieldType.StructArray:
+        //                    break;
+        //                case FieldType.PointerArray:
+        //                    break;
+        //                case FieldType.ExternalArray:
+        //                    break;
+        //                default:
+        //                    break;
+        //            }
+        //        }
+        //        writer.WriteEndElement();
+        //        break;
+        //    case PrimitiveEntity p:
+        //        writer.WriteStartElement("Primitive");
+        //        writer.WriteAttributeString("Type", p.DataType.Name);
+        //        writer.WriteValue(p.Value);
+        //        writer.WriteEndElement();
+        //        break;
+        //    case FlagsEnumEntity f:
+        //        writer.WriteStartElement("Flags");
+        //        writer.WriteAttributeString("Type", f.DataType.Name);
+        //        writer.WriteAttributeString("Value", Convert.ToString(f.Value, 2));
+        //        writer.WriteValue(string.Join('|', f.DataType.Fields.Where((v, i) => (f.Value >> i) % 2 == 1).Select(f => f.Name)));
+        //        writer.WriteEndElement();
+        //        break;
+        //    case EnumEntity e:
+        //        writer.WriteStartElement("Enum");
+        //        writer.WriteAttributeString("Type", e.DataType.Name);
+        //        writer.WriteValue(e.DataType.Fields[e.Value].Name);
+        //        writer.WriteEndElement();
+        //        break;
+        //};
+    }
 }

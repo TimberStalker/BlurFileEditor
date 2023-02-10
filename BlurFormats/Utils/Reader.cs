@@ -65,7 +65,8 @@ public ref struct Reader
 
         return Encoding.Unicode.GetString(Bytes.Slice(start, count-2));
     }
-    public string ReadStringDecrypted(int length) => Decrypt(Read(length));
+    static BlurEncoding BlurEncoding { get; } = new BlurEncoding();
+    public string ReadStringDecrypted(int length) => BlurEncoding.GetString(Read(length));
 
     public T Read<T>() where T : IReadable, new()
     {
@@ -80,15 +81,29 @@ public ref struct Reader
         Span<byte> result = stackalloc byte[bytes.Length];
         foreach(var b in bytes)
         {
-            int temp = b ^ 179;
-            temp = magic_var1 - temp;
-            magic_var1 = (byte)(magic_var1 + temp - i);
+            byte originalChar = (byte)(magic_var1 - (b ^ 179));
+            magic_var1 = (byte)(magic_var1 + originalChar - i);
             
-            result[i++] = (byte)temp;
+            result[i++] = originalChar;
         }
 
         return Encoding.ASCII.GetString(result);
-}
+    }
+    public static Span<byte> Encrypt(ReadOnlySpan<byte> bytes)
+    {
+        int i = 0;
+        int magic_var1 = 204;
+        byte[] result = new byte[bytes.Length];
+        foreach (var b in bytes)
+        {
+            byte enryptedChar = (byte)((magic_var1 - b) ^ 179);
+            magic_var1 = (byte)(magic_var1 + b - i);
+
+            result[i++] = enryptedChar;
+        }
+
+        return result;
+    }
 
     public void Dispose()
     {

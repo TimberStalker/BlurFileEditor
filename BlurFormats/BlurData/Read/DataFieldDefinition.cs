@@ -6,18 +6,24 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Read;
-public struct DatafieldDefinition : IReadable
+public struct DataFieldDefinition : IReadable
 {
-    public ushort StringOffset { get; private set; }
-    public ushort StructureType { get; private set; }
-    public ushort Offset { get; private set; }
-    public ushort ReadType { get; private set; }
-
+    public short NameOffset { get; private set; }
+    public short BaseType { get; private set; }
+    public short Offset { get; private set; }
+    public short FieldType { get; private set; }
+    public DataFieldDefinition(short nameOffset, short baseType, short offset, short fieldType)
+    {
+        NameOffset = nameOffset;
+        BaseType = baseType;
+        Offset = offset;
+        FieldType = fieldType;
+    }
     public void Read(ref Reader reader)
     {
-        StringOffset = reader.ReadUShort();
-        StructureType = reader.ReadUShort();
-        Offset = reader.ReadUShort();
-        ReadType = reader.ReadUShort();
+        NameOffset = reader.ReadShort();
+        BaseType = reader.ReadShort();
+        Offset = reader.ReadShort();
+        FieldType = reader.ReadShort();
     }
 }

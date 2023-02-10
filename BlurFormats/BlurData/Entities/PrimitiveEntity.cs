@@ -5,18 +5,23 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Entities;
-public class PrimitiveEntity<T> : Entity where T : notnull
+public class PrimitiveEntity<T> : IPrimitiveEntity<T> where T : notnull
 {
-    new public T Value 
-    { 
-        get => (T)base.Value; 
-        set
-        {
-            base.Value = value;
-            UpdateProperty(nameof(Value));
-        }
-    }
-    public PrimitiveEntity(DataType dataType, T value) : base(dataType, value)
+
+    public T Value { get; set; }
+    object IEntity.Value => Value;
+    public Guid Guid { get; }
+    public DataType Type { get; }
+
+    public PrimitiveEntity(DataType type, T value)
     {
+        Guid = Guid.NewGuid();
+        Value = value;
+        Type = type;
+    }
+
+    public override string ToString()
+    {
+        return Value.ToString()!;
     }
 }

@@ -5,9 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Entities;
-public class NullEntity : Entity
+public class NullEntity : IEntity
 {
-    public NullEntity(DataType dataType) : base(dataType, -1)
+    object IEntity.Value => -1;
+    public DataType Type { get; }
+    public Guid Guid { get; }
+
+
+    public NullEntity(DataType type)
     {
+        Guid = Guid.NewGuid();
+        Type = type;
     }
+
 }

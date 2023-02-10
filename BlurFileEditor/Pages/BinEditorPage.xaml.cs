@@ -23,4 +23,9 @@ public partial class BinEditorPage : Page
     {
         InitializeComponent();
     }
+
+    private void ComboBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled= true;
+    }
 }

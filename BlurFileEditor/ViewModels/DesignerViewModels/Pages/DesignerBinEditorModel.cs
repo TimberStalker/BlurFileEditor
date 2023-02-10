@@ -12,6 +12,6 @@ internal class DesignerBinEditorModel : BinEditorViewModel
 {
 	public DesignerBinEditorModel()
 	{
-        this.SetFileSource(new FileInfo("C:\\Users\\MyName\\Desktop\\BlurModified\\gamedata\\xt\\achievements.bin"));
+        this.SetFileSource(new FileInfo("C:\\Users\\ChrisG\\Desktop\\BlurModified\\gamedata\\xt\\achievements.bin"));
     }
 }
