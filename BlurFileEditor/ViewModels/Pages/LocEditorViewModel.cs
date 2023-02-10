@@ -25,33 +25,11 @@ public class LocEditorViewModel : ViewModelBase
     }
     public IEnumerable<LocString> VisibleStrings => string.IsNullOrEmpty(SearchCriteria) ? Localization.Strings : Localization.Strings.Where(t => t.Header.Contains(SearchCriteria, StringComparison.CurrentCultureIgnoreCase) || t.Texts.Any(kv => kv.Value.Text.Contains(SearchCriteria, StringComparison.CurrentCultureIgnoreCase)));
     public BlurLocalization Localization { get; set; }
-    //public ICommand LoadFile { get; private set; }
-    //public ICommand ExportFile { get; private set; }
     public ICommand AddLanguage { get; private set; }
     public ICommand RemoveLanguage { get; private set; }
     public LocEditorViewModel()
     {
         Localization = new BlurLocalization();
-        //LoadFile = new Command(() =>
-        //{
-        //    if (openDialog.ShowDialog() == true)
-        //    {
-        //        using var stream = openDialog.OpenFile();
-        //        var bytes = new byte[stream.Length];
-        //        stream.Read(bytes, 0, bytes.Length);
-
-        //        try
-        //        {
-        //            Localization = Localization.Create(bytes);
-        //            UpdateProperty(nameof(Localization));
-        //            UpdateProperty(nameof(VisibleStrings));
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            System.Windows.MessageBox.Show(ex.Message);
-        //        }
-        //    }
-        //});
         //ExportFile = new Command(() =>
         //{
         //    if(saveDialog.ShowDialog() == true)
@@ -67,6 +45,8 @@ public class LocEditorViewModel : ViewModelBase
         });
         RemoveLanguage = new Command<BlurLocalization.Language>((l) =>
         {
+            if (l is null) return;
+
             Localization.Languages.Remove(l);
             UpdateProperty("Localization");
         });

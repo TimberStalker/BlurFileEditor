@@ -50,7 +50,10 @@
                     <ColumnDefinition/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Button>
+                <Button Height="{x:Static SystemParameters.IconHeight}" 
+                        Width="{x:Static SystemParameters.IconWidth}"
+                        WindowChrome.IsHitTestVisibleInChrome="True"
+                        BorderThickness="1" Command="{x:Static SystemCommands.ShowSystemMenuCommand}">
                     
                 </Button>
                 <Menu Grid.Column="1" VerticalContentAlignment="Center" Background="Transparent">
@@ -62,11 +65,11 @@
             <ToolBarTray Grid.Row="1" Grid.ColumnSpan="3" Background="Transparent">
                 <ToolBar Background="Transparent"/>
             </ToolBarTray>
-            <TabControl TabIndex="{Binding SelectedTab, Mode=TwoWay}" Grid.Row="2" ItemsSource="{Binding OpenEditors}">
+            <TabControl SelectedIndex="{Binding SelectedTab, Mode=TwoWay}" Grid.Row="2" ItemsSource="{Binding OpenEditors}">
                 <TabControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type editors:FileEditor}">
-                        <DockPanel>
-                            <Label Content="{Binding Name}"/>
+                        <DockPanel Height="20">
+                            <Label Content="{Binding Name}" Margin="0,0,5,0" Padding="0" VerticalAlignment="Center"/>
                             <Button FontFamily="Segoe MDL2 Assets" Content="&#xE711;" ToolTipService.InitialShowDelay="10" ToolTip="Close" Margin="0" BorderThickness="0" Background="Transparent"/>
                         </DockPanel>
                     </DataTemplate>

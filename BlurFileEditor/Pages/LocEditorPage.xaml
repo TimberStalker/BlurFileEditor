@@ -10,7 +10,6 @@
       xmlns:vm="clr-namespace:BlurFileEditor.ViewModels.Pages"
       xmlns:anim="clr-namespace:BlurFileEditor.Utils.Animations"
       mc:Ignorable="d" 
-      d:DataContext="{d:DesignInstance Type=db:DesignerLocEditorViewModel,IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
       Background="White"
       ShowsNavigationUI="False">
@@ -179,7 +178,7 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <Button x:Name="AddButton" ToolTip="Add Language" Margin="0" FontFamily="Segoe MDL2 Assets" Content="&#xE710;" Width="30" HorizontalAlignment="Center" BorderThickness="0">
+                <Button x:Name="AddButton" ToolTip="Add Language" Margin="0" Command="{Binding AddLanguage}" FontFamily="Segoe MDL2 Assets" Content="&#xE710;" Width="30" HorizontalAlignment="Center" BorderThickness="0">
                     <Button.Style>
                         <Style TargetType="Button">
                             <Setter Property="Background" Value="#FFEDEDED"/>
