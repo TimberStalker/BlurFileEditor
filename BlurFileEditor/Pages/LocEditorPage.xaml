@@ -12,7 +12,8 @@
       mc:Ignorable="d" 
       d:DataContext="{d:DesignInstance Type=db:DesignerLocEditorViewModel,IsDesignTimeCreatable=True}"
       d:DesignHeight="450" d:DesignWidth="800"
-      Background="White">
+      Background="White"
+      ShowsNavigationUI="False">
     <Page.DataContext>
         <vm:LocEditorViewModel/>
     </Page.DataContext>

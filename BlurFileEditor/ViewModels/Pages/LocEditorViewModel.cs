@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using static BlurFormats.Loc.Localization;
+using static BlurFormats.Loc.BlurLocalization;
 
 namespace BlurFileEditor.ViewModels.Pages;
 public class LocEditorViewModel : ViewModelBase
@@ -24,14 +24,14 @@ public class LocEditorViewModel : ViewModelBase
         }
     }
     public IEnumerable<LocString> VisibleStrings => string.IsNullOrEmpty(SearchCriteria) ? Localization.Strings : Localization.Strings.Where(t => t.Header.Contains(SearchCriteria, StringComparison.CurrentCultureIgnoreCase) || t.Texts.Any(kv => kv.Value.Text.Contains(SearchCriteria, StringComparison.CurrentCultureIgnoreCase)));
-    public Localization Localization { get; set; }
+    public BlurLocalization Localization { get; set; }
     //public ICommand LoadFile { get; private set; }
     //public ICommand ExportFile { get; private set; }
     public ICommand AddLanguage { get; private set; }
     public ICommand RemoveLanguage { get; private set; }
     public LocEditorViewModel()
     {
-        Localization = new Localization();
+        Localization = new BlurLocalization();
         //LoadFile = new Command(() =>
         //{
         //    if (openDialog.ShowDialog() == true)
@@ -62,10 +62,10 @@ public class LocEditorViewModel : ViewModelBase
         //});
         AddLanguage = new Command(() =>
         {
-            Localization.Languages.Add(new Localization.Language());
+            Localization.Languages.Add(new BlurLocalization.Language());
             UpdateProperty("Localization");
         });
-        RemoveLanguage = new Command<Localization.Language>((l) =>
+        RemoveLanguage = new Command<BlurLocalization.Language>((l) =>
         {
             Localization.Languages.Remove(l);
             UpdateProperty("Localization");
@@ -75,7 +75,7 @@ public class LocEditorViewModel : ViewModelBase
     {
         if (info is null) return;
 
-        var bytes = Localization.ToBytes(Localization);
+        var bytes = BlurLocalization.ToBytes(Localization);
         File.WriteAllBytes(info.FullName, bytes);
     }
     public void SetFileSource(FileSystemInfo info)
@@ -87,7 +87,7 @@ public class LocEditorViewModel : ViewModelBase
 
         try
         {
-            Localization = Localization.CreateFrom(bytes);
+            Localization = BlurLocalization.CreateFrom(bytes);
             UpdateProperty(nameof(Localization));
             UpdateProperty(nameof(VisibleStrings));
         }

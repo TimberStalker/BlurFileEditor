@@ -10,15 +10,15 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.Loc;
-public class Localization
+public class BlurLocalization
 {
     public ObservableCollection<Language> Languages { get; } = new ObservableCollection<Language>();
     public ObservableCollection<LocString> Strings { get; } = new ObservableCollection<LocString>();
 
-    public static Localization CreateFrom(byte[] bytes)
+    public static BlurLocalization CreateFrom(byte[] bytes)
     {
         var reader = new Reader(bytes);
-        var loc = new Localization();
+        var loc = new BlurLocalization();
 
         string format = reader.ReadString(4);
         if (format != "OLTX") throw new Exception($"{format} is not a handled loc format.");
@@ -87,7 +87,7 @@ public class Localization
         }
         return loc;
     }
-    public static byte[] ToBytes(Localization localization)
+    public static byte[] ToBytes(BlurLocalization localization)
     {
         int asciiOffset = localization.Strings.Count * 8;
         byte[] asciiBytes;

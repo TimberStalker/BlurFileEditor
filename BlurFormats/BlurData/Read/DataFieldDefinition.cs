@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlurFormats.BinFile.Definitions;
+namespace BlurFormats.BlurData.Read;
 public struct DatafieldDefinition : IReadable
 {
     public ushort StringOffset { get; private set; }

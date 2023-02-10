@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using BlurFormats.Utils;
 
-namespace BlurFormats.BinFile.Definitions;
+namespace BlurFormats.BlurData.Read;
 public struct DataTypeDefinition : IReadable
 {
     public ushort StringOffset { get; private set; }

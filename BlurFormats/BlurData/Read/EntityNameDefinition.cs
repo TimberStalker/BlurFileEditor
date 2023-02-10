@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlurFormats.BinFile.Definitions;
+namespace BlurFormats.BlurData.Read;
 [DebuggerDisplay("Entity:{Entity} L:{Length} S:{Size} O:{Offset}")]
 public struct EntityNameDefinition : IReadable
 {

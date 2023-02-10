@@ -22,6 +22,17 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Explorer.RootDirectory = "C:\\Users\\ChrisG\\Desktop\\BlurModified";
+    }
+
+    private void Window_StateChanged(object sender, EventArgs e)
+    {
+        if(WindowState == WindowState.Maximized)
+        {
+            WindowBorder.BorderThickness = new Thickness(8);
+        }
+        else
+        {
+            WindowBorder.BorderThickness = new Thickness(2);
+        }
     }
 }

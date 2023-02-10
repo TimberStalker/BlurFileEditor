@@ -7,11 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="300"
              Name="uc">
-    <UserControl.Resources>
-        <x:Array Type="local:FileSystemObject" x:Key="DesignTimeRoot">
-            <local:FileSystemObject/>
-        </x:Array>
-    </UserControl.Resources>
     <Grid DataContext="{Binding .,ElementName=uc}" Background="White">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -23,7 +18,7 @@
                 <Button FontFamily="Segoe MDL2 Assets" Content="&#xE7FD;" ToolTip="Show Active File"/>
             </ToolBar>
         </ToolBarTray>
-        <TreeView Grid.Row="1" ItemsSource="{Binding RootFileObject}" d:ItemsSource="{StaticResource DesignTimeRoot}" HorizontalContentAlignment="Stretch">
+        <TreeView Grid.Row="1" ItemsSource="{Binding RootFileObject}" HorizontalContentAlignment="Stretch">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource ExpandableItemTreeView}">
                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />

@@ -12,6 +12,6 @@ internal class DesignerLocEditorViewModel : LocEditorViewModel
 {
 	public DesignerLocEditorViewModel()
 	{
-		Localization = Localization.CreateFrom(File.ReadAllBytes("C:\\Users\\ChrisG\\Desktop\\OriginalBlur\\Blur\\cache\\gamedata\\gamedata\\xt\\loc\\multiplayerts.loc"));
+		Localization = BlurLocalization.CreateFrom(File.ReadAllBytes("C:\\Users\\ChrisG\\Desktop\\OriginalBlur\\Blur\\cache\\gamedata\\gamedata\\xt\\loc\\multiplayerts.loc"));
 	}
 }

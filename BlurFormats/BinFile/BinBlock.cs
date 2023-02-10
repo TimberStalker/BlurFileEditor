@@ -1,5 +1,5 @@
-﻿using BlurFormats.BinFile.Definitions;
-using BlurFormats.BinFile.Entities;
+﻿using BlurFormats.BinFile.Entities;
+using BlurFormats.BlurData.Read;
 using BlurFormats.Utils;
 using System;
 using System.Collections.Generic;
@@ -70,7 +70,7 @@ public sealed class BinBlock
     {
         var result =  new BinBlock();
         var reader = new Reader(bytes);
-        var read = BinRead.FromBytes(ref reader);
+        var read = DataRead.FromBytes(ref reader);
 
         foreach (var dataType in read.DataTypeDefinitions)
         {

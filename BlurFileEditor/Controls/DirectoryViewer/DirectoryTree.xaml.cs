@@ -23,7 +23,7 @@ namespace BlurFileEditor.Controls.DirectoryViewer;
 public partial class DirectoryTree : UserControl, INotifyPropertyChanged
 {
     FileSystemObject? rootFileObject;
-    internal FileSystemObject? RootFileObject 
+    public FileSystemObject? RootFileObject 
     { 
         get => rootFileObject;
         private set
@@ -67,10 +67,18 @@ public partial class DirectoryTree : UserControl, INotifyPropertyChanged
         else
         {
             directoryTree.RootFileObject = new FileSystemObject(new DirectoryInfo((string)e.NewValue));
+            directoryTree.RootFileObject.OnCreatedChild += directoryTree.ChildFileObjectCreated;
+            directoryTree.RootFileObject.OnFileOpened += directoryTree.OpenFile;
         }
     }
 
-    public void OpenFile(FileSystemInfo info) => OnFileOpened.Execute(info);
+    public void OpenFile(object? sender, FileSystemInfo info) => OnFileOpened?.Execute(info);
+
+    private void ChildFileObjectCreated(object? sender, FileSystemObject fileObject)
+    {
+        fileObject.OnCreatedChild += ChildFileObjectCreated;
+        fileObject.OnFileOpened += OpenFile;
+    }
 
     public DirectoryTree()
     {

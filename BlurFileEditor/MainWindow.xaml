@@ -12,57 +12,74 @@
         xmlns:debug="debug-mode"
         Title="MainWindow" Height="650" Width="1200"
         FontFamily="Cascadia Mono"
-        WindowStyle="None">
+        WindowStyle="None"
+        StateChanged="Window_StateChanged">
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
+    <Window.Resources>
+        <Style x:Key="MenuButtonStyle" TargetType="MenuItem">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Padding" Value="8,0"/>
+        </Style>
+    </Window.Resources>
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="32" ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}" />
     </WindowChrome.WindowChrome>
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="32"/>
-            <RowDefinition Height="32"/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="5"/>
-            <ColumnDefinition Width="300"/>
-        </Grid.ColumnDefinitions>
-        <Grid Grid.Row="0" Grid.ColumnSpan="3" >
+    <Border x:Name="WindowBorder" BorderThickness="2" BorderBrush="#FFA4FFA4">
+        <Grid Margin="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="32"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="300"/>
             </Grid.ColumnDefinitions>
-            <Menu Grid.Column="1" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" Background="Transparent">
-                <MenuItem Header="_File" BorderThickness="0" Height="32" VerticalAlignment="Stretch" VerticalContentAlignment="Center">
-                    <MenuItem Header="Open"/>
-                </MenuItem>
-                <MenuItem Header="View" BorderThickness="0" Height="32" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
-            </Menu>
+            <Grid Grid.Row="0" Grid.ColumnSpan="3" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button>
+                    
+                </Button>
+                <Menu Grid.Column="1" VerticalContentAlignment="Center" Background="Transparent">
+                    <MenuItem Header="_File" Style="{StaticResource MenuButtonStyle}">
+                        <MenuItem Header="_Open" Command="{Binding SetEditorDirectory}"/>
+                    </MenuItem>
+                </Menu>
+            </Grid>
+            <ToolBarTray Grid.Row="1" Grid.ColumnSpan="3" Background="Transparent">
+                <ToolBar Background="Transparent"/>
+            </ToolBarTray>
+            <TabControl TabIndex="{Binding SelectedTab, Mode=TwoWay}" Grid.Row="2" ItemsSource="{Binding OpenEditors}">
+                <TabControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type editors:FileEditor}">
+                        <DockPanel>
+                            <Label Content="{Binding Name}"/>
+                            <Button FontFamily="Segoe MDL2 Assets" Content="&#xE711;" ToolTipService.InitialShowDelay="10" ToolTip="Close" Margin="0" BorderThickness="0" Background="Transparent"/>
+                        </DockPanel>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+                <TabControl.ContentTemplate>
+                    <ItemContainerTemplate>
+                        <Frame Content="{Binding EditorContent}">
+                        </Frame>
+                    </ItemContainerTemplate>
+                </TabControl.ContentTemplate>
+            </TabControl>
+            <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+            <dv:DirectoryTree x:Name="Explorer" RootDirectory="{Binding EditorDirectory}" Grid.Row="2" Grid.Column="2" OnFileOpened="{Binding OpenFileCommand}"/>
         </Grid>
-        <ToolBarTray Grid.Row="1" Grid.ColumnSpan="3" Background="Transparent">
-            <ToolBar Background="Transparent"/>
-        </ToolBarTray>
-        <TabControl Grid.Row="2" ItemsSource="{Binding OpenEditors}">
-            <TabControl.ItemTemplate>
-                <DataTemplate DataType="{x:Type editors:FileEditor}">
-                    <DockPanel>
-                        <Label Content="{Binding Name}"/>
-                        <Button FontFamily="Segoe MDL2 Assets" Content="&#xE711;" ToolTipService.InitialShowDelay="10" ToolTip="Close" Margin="0" BorderThickness="0" Background="Transparent"/>
-                    </DockPanel>
-                </DataTemplate>
-            </TabControl.ItemTemplate>
-            <TabControl.ContentTemplate>
-                <ItemContainerTemplate>
-                    <Frame Content="{Binding EditorContent}">
-                    </Frame>
-                </ItemContainerTemplate>
-            </TabControl.ContentTemplate> 
-        </TabControl>
-        <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
-        <dv:DirectoryTree x:Name="Explorer" RootDirectory="C:\\Users\\ChrisG\\Desktop\\BlurModified" Grid.Row="2" Grid.Column="2" OnFileOpened="{Binding OpenFileCommand}"/>
-    </Grid>
+    </Border>
 </Window>

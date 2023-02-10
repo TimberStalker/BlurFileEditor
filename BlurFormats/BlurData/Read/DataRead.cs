@@ -1,13 +1,12 @@
-﻿using BlurFormats.BinFile.Definitions;
-using BlurFormats.Utils;
+﻿using BlurFormats.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlurFormats.BinFile;
-public sealed class BinRead
+namespace BlurFormats.BlurData.Read;
+public sealed class DataRead
 {
     public List<DataTypeDefinition> DataTypeDefinitions { get; private set; } = new();
     public List<int> UnknownDefinitions { get; private set; } = new();
@@ -16,7 +15,7 @@ public sealed class BinRead
     public List<EntityNameDefinition> EntityNameDefinitions { get; private set; } = new();
     public List<Block3Definition> Block3Definitions { get; private set; } = new();
     public string StringsData { get; set; } = "";
-    public static BinRead FromBytes(ref Reader reader)
+    public static DataRead FromBytes(ref Reader reader)
     {
 
         string format = reader.ReadString(4);
@@ -25,7 +24,7 @@ public sealed class BinRead
         int magicNumber = reader.ReadInt();
         if (magicNumber != 2) throw new Exception($"Magic number is not correct. Should be '2' but instead is '{magicNumber}'.");
 
-        var bin = new BinRead();
+        var bin = new DataRead();
 
         Header dataTypesHeader = reader.Read<Header>();
         Header unknownHeader = reader.Read<Header>();
@@ -39,12 +38,12 @@ public sealed class BinRead
         for (int i = 0; i < dataTypesHeader.Length; i++)
             bin.DataTypeDefinitions.Add(reader.Read<DataTypeDefinition>());
 
-        for(int i = 0; i < unknownHeader.Length; i++)
+        for (int i = 0; i < unknownHeader.Length; i++)
             bin.UnknownDefinitions.Add(reader.ReadInt());
 
         for (int i = 0; i < dataFieldsHeader.Length; i++)
             bin.DataFieldDefinitions.Add(reader.Read<DatafieldDefinition>());
-        
+
         bin.StringsData = reader.ReadStringDecrypted(encryptedStringsHeader.Length);
 
         for (int i = 0; i < entityDefinitionsHeader.Length; i++)
@@ -52,8 +51,8 @@ public sealed class BinRead
 
         for (int i = 0; i < entityNamesHeader.Length; i++)
             bin.EntityNameDefinitions.Add(reader.Read<EntityNameDefinition>());
-        
-        for(int i = 0; i < block3Header.Length; i++)
+
+        for (int i = 0; i < block3Header.Length; i++)
         {
             bin.Block3Definitions.Add(reader.Read<Block3Definition>());
         }

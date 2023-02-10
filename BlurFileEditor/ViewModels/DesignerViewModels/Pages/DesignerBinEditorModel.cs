@@ -14,7 +14,7 @@ internal class DesignerBinEditorModel : BinEditorViewModel
 	public DesignerBinEditorModel()
 	{
 
-        Bin = BinBlock.FromBytes(File.ReadAllBytes("C:\\Users\\ChrisG\\Desktop\\OriginalBlur\\Blur\\cache\\gamedata\\gamedata\\xt\\multiplayer.bin"));
+        Bin = BinBlock.FromBytes(File.ReadAllBytes("C:\\Users\\MyName\\Desktop\\OriginalBlur\\Blur\\cache\\gamedata\\gamedata\\xt\\multiplayer.bin"));
 
         using var textStream = new StringWriter();
         Bin.PrintTypes(textStream);

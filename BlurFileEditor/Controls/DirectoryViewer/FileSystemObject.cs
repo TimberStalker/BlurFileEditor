@@ -13,14 +13,14 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 
 namespace BlurFileEditor.Controls.DirectoryViewer;
-internal class FileSystemObject : INotifyPropertyChanged, IEnumerable<FileSystemObject>
+public class FileSystemObject : INotifyPropertyChanged, IEnumerable<FileSystemObject>
 {
-    ObservableCollection<FileSystemObject> children;
+    ObservableCollection<FileSystemObject>? children;
     ImageSource? imageSource;
     bool isExpanded;
     FileSystemInfo fileSystemInfo;
     DriveInfo? drive;
-    public ObservableCollection<FileSystemObject> Children
+    public ObservableCollection<FileSystemObject>? Children
     {
         get => children;
         private set 
@@ -50,7 +50,6 @@ internal class FileSystemObject : INotifyPropertyChanged, IEnumerable<FileSystem
             UpdateProperty(nameof(IsExpanded));
         }
     }
-    [MemberNotNull(nameof(fileSystemInfo))]
     public FileSystemInfo FileSystemInfo
     {
         get => fileSystemInfo;
@@ -77,20 +76,17 @@ internal class FileSystemObject : INotifyPropertyChanged, IEnumerable<FileSystem
     public event EventHandler? OnAfterExpand;
     public event EventHandler? OnBeforeExplore;
     public event EventHandler? OnAfterExplore;
-    public event EventHandler? OnCreateChildren;
+    public event EventHandler<FileSystemObject>? OnCreatedChild;
 
-    public event Action<FileSystemObject>? OnFileOpened;
+    public event EventHandler<FileSystemInfo>? OnFileOpened;
 
     public FileSystemObject(DriveInfo drive)
         : this(drive.RootDirectory)
     {
     }
-    public FileSystemObject() : this(new DirectoryInfo("C:\\Users\\ChrisG\\Desktop\\BlurModified"))
-    {
-
-    }
     public FileSystemObject(FileSystemInfo info)
     {
+        fileSystemInfo = info;
         FileSystemInfo = info;
 
         if (info is DirectoryInfo)
@@ -125,7 +121,7 @@ internal class FileSystemObject : INotifyPropertyChanged, IEnumerable<FileSystem
         }
         else
         {
-            OnFileOpened?.Invoke(this);
+            OnFileOpened?.Invoke(this, FileSystemInfo);
         }
     }
 
@@ -152,6 +148,7 @@ internal class FileSystemObject : INotifyPropertyChanged, IEnumerable<FileSystem
                     var fileSystemObject = new FileSystemObject(directory);
                     fileSystemObject.OnBeforeExplore += (sender, e) => BeforeExplore();
                     fileSystemObject.OnAfterExplore += (sender, e) => AfterExplore();
+                    OnCreatedChild?.Invoke(this, fileSystemObject);
                     Children!.Add(fileSystemObject);
                 }
             }
@@ -172,14 +169,16 @@ internal class FileSystemObject : INotifyPropertyChanged, IEnumerable<FileSystem
                 if ((file.Attributes & FileAttributes.System) != FileAttributes.System &&
                     (file.Attributes & FileAttributes.Hidden) != FileAttributes.Hidden)
                 {
-                    Children!.Add(new FileSystemObject(file));
+                    var fileObject = new FileSystemObject(file);
+                    OnCreatedChild?.Invoke(this, fileObject);
+                    Children!.Add(fileObject);
                 }
             }
         }
     }
     void ExploreChildren()
     {
-        Children.RemoveAt(0);
+        Children?.RemoveAt(0);
         BeforeExplore();
         
         ExploreDirectories();
