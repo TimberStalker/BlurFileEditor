@@ -1,0 +1,29 @@
+﻿<Window x:Class="BlurFileEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BlurFileEditor"
+        xmlns:pages="clr-namespace:BlurFileEditor.Pages"
+        mc:Ignorable="d"
+        xmlns:debug="debug-mode"
+        Title="MainWindow" Height="650" Width="1200">
+    <Grid>
+        <TabControl>
+            <TabItem Header="Bin File">
+                <Frame>
+                    <Frame.Content>
+                        <pages:BinEditor/>
+                    </Frame.Content>
+                </Frame>
+            </TabItem>
+            <TabItem Header="Loc File">
+                <Frame>
+                    <Frame.Content>
+                        <pages:LocEditor/>
+                    </Frame.Content>
+                </Frame>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
