@@ -1,0 +1,99 @@
+﻿<Page x:Class="BlurFileEditor.Pages.BinEditorPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:BlurFileEditor.Pages"
+      xmlns:bin="clr-namespace:BlurFormats.BlurData;assembly=BlurFormats"
+      xmlns:db="clr-namespace:BlurFileEditor.ViewModels.DesignerViewModels.Pages"
+      xmlns:b="clr-namespace:BlurFileEditor.Behaviors"
+      xmlns:e="clr-namespace:BlurFormats.BlurData.Entities;assembly=BlurFormats"
+      xmlns:vm="clr-namespace:BlurFileEditor.ViewModels.Pages"
+      mc:Ignorable="d" 
+      d:DataContext="{d:DesignInstance IsDesignTimeCreatable=True, Type=db:DesignerBinEditorModel}"
+      d:DesignHeight="650" d:DesignWidth="1000"
+      FontFamily="CascadiaMono"
+      Title="BinEditor">
+    <Page.DataContext>
+        <vm:BinEditorViewModel/>
+    </Page.DataContext>
+    <Page.Resources>
+    </Page.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TreeView ItemsSource="{Binding Bin.Entities}" HorizontalContentAlignment="Stretch">
+            <TreeView.Resources>
+                <DataTemplate DataType="{x:Type e:Entity}">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="{Binding DataType.Name}"/>
+                        <Label Content="{Binding DataField.Name}"/>
+                        <Label Content="="/>
+                        <Label Content="{Binding Value}"/>
+                    </StackPanel>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type e:StringEntity}">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="{Binding DataType.Name}"/>
+                        <Label Content="{Binding DataField.Name}"/>
+                        <Label Content="="/>
+                        <Label Content='"' Margin="0"/>
+                        <TextBox BorderThickness="0" Padding="0" Margin="0" VerticalContentAlignment="Center" Text="{Binding Value}"/>
+                        <Label Content='"' Margin="0"/>
+                    </StackPanel>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type e:EnumEntity}">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="{Binding DataType.Name}"/>
+                        <Label Content="{Binding DataField.Name}"/>
+                        <Label Content="="/>
+                        <ComboBox SelectedIndex="{Binding Value}" VerticalContentAlignment="Center" ItemsSource="{Binding DataType.Fields}"/>
+                    </StackPanel>
+                </DataTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type e:ArrayEntity}" ItemsSource="{Binding Value}">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="{Binding DataType.Name}" ContentStringFormat="{}{0}[]"/>
+                        <Label Content="{Binding DataField.Name}"/>
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type e:ObjectEntity}" ItemsSource="{Binding Fields}">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="{Binding DataType.Name}"/>
+                        <Label Content="{Binding DataField.Name}"/>
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+            </TreeView.Resources>
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem">
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem Header="{Binding EntityType.Name}" Focusable="False"/>
+                                <Separator/>
+                                <MenuItem Header="{Binding DataField.Name}" Focusable="False"/>
+                                <MenuItem Header="{Binding DataField.Offset}" Focusable="False"/>
+                                <MenuItem Header="{Binding DataField.ReadType}" Focusable="False"/>
+                                <Separator/>
+                                <MenuItem Header="{Binding DataType.Name}" Focusable="False"/>
+                                <MenuItem Header="{Binding DataType.ReadType}" Focusable="False"/>
+                                <MenuItem Header="{Binding DataType.DecodeType}" Focusable="False"/>
+                                <MenuItem Header="{Binding DataType.Size}" Focusable="False"/>
+                                <MenuItem Header="{Binding DataType.Parent.Name}" Focusable="False"/>
+                                <Separator/>
+                                <MenuItem Header="{Binding Range}" Focusable="False"/>
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TreeView.ItemContainerStyle>
+        </TreeView>
+        <GridSplitter Grid.Column="1" Width="3" VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
+        <TextBox Grid.Column="2" Text="{Binding BinTypesText, Mode=TwoWay}" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+    </Grid>
+</Page>

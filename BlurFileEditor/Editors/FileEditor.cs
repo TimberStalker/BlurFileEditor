@@ -17,14 +17,15 @@ public abstract class FileEditor
         Info = info;
     }
 
+    static Dictionary<string, Type> validEditors;
+    static FileEditor()
+    {
+        validEditors = FileEditorAttribute.GetFileEditors().ToDictionary(t => t.Item1.Extension, t => t.Item2);
+    }
     public static FileEditor? CreateFileEditorFor(FileSystemInfo info)
     {
-        switch(info.Extension)
-        {
-            case ".loc":
-                return new LocEditor(info);
-            default:
-                return null;
-        }
+        if (!validEditors.TryGetValue(info.Extension, out var editorType)) return null;
+
+        return Activator.CreateInstance(editorType, info) as FileEditor;
     }
 }

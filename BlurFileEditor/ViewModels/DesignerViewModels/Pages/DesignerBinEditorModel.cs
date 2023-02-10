@@ -1,5 +1,4 @@
 ﻿using BlurFileEditor.ViewModels.Pages;
-using BlurFormats.BinFile;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,12 +12,6 @@ internal class DesignerBinEditorModel : BinEditorViewModel
 {
 	public DesignerBinEditorModel()
 	{
-
-        Bin = BinBlock.FromBytes(File.ReadAllBytes("C:\\Users\\MyName\\Desktop\\OriginalBlur\\Blur\\cache\\gamedata\\gamedata\\xt\\multiplayer.bin"));
-
-        using var textStream = new StringWriter();
-        Bin.PrintTypes(textStream);
-
-        BinTypesText = textStream.ToString();
+        this.SetFileSource(new FileInfo("C:\\Users\\MyName\\Desktop\\BlurModified\\gamedata\\xt\\achievements.bin"));
     }
 }

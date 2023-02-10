@@ -17,9 +17,9 @@ namespace BlurFileEditor.Pages;
 /// <summary>
 /// Interaction logic for BinEditor.xaml
 /// </summary>
-public partial class BinEditor : Page
+public partial class BinEditorPage : Page
 {
-    public BinEditor()
+    public BinEditorPage()
     {
         InitializeComponent();
     }

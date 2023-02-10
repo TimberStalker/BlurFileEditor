@@ -1,5 +1,5 @@
 ﻿using BlurFileEditor.Utils;
-using BlurFormats.BinFile;
+using BlurFormats.BlurData;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -12,10 +12,10 @@ using System.Windows.Input;
 namespace BlurFileEditor.ViewModels.Pages;
 public class BinEditorViewModel : ViewModelBase
 {
-    OpenFileDialog fileDialog;
+    FileSystemInfo? info;
     string binTypesText = "";
 
-    public BinBlock Bin { get; set; }
+    public BlurData Bin { get; set; }
     public string BinTypesText
     {
         get => binTypesText;
@@ -24,30 +24,24 @@ public class BinEditorViewModel : ViewModelBase
             UpdateProperty(nameof(BinTypesText));
         }
     }
-    public ICommand LoadFile { get; private set; }
     public BinEditorViewModel()
     {
-        Bin = new BinBlock();
-        fileDialog = new OpenFileDialog()
-        {
-            Filter = "Bin | *.bin"
-        };
-        LoadFile = new Command(() =>
-        {
-            if (fileDialog.ShowDialog() == true)
-            {
-                using var stream = fileDialog.OpenFile();
-                var bytes = new byte[stream.Length];
-                stream.Read(bytes, 0, bytes.Length);
+        Bin = new BlurData();
+    }
+    public void SetFileSource(FileSystemInfo info)
+    {
+        this.info = info;
+        using var stream = new FileStream(info.FullName, FileMode.Open);
+        var bytes = new byte[stream.Length];
+        stream.Read(bytes, 0, bytes.Length);
 
-                var block = BinBlock.FromBytes(bytes);
+        var block = BlurData.FromBytes(bytes);
 
-                using var textStream = new StringWriter();
-                block.PrintTypes(textStream);
+        using var textStream = new StringWriter();
+        block.PrintTypes(textStream);
 
-                Bin = block;
-                BinTypesText = textStream.ToString();
-            }
-        });
+        Bin = block;
+        BinTypesText = textStream.ToString();
+        UpdateProperty(nameof(Bin));
     }
 }
