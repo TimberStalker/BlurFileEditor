@@ -4,26 +4,65 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BlurFileEditor"
+        xmlns:vm="clr-namespace:BlurFileEditor.ViewModels.Windows"
         xmlns:pages="clr-namespace:BlurFileEditor.Pages"
+        xmlns:editors="clr-namespace:BlurFileEditor.Editors"
+        xmlns:dv="clr-namespace:BlurFileEditor.Controls.DirectoryViewer"
         mc:Ignorable="d"
         xmlns:debug="debug-mode"
-        Title="MainWindow" Height="650" Width="1200">
+        Title="MainWindow" Height="650" Width="1200"
+        FontFamily="Cascadia Mono"
+        WindowStyle="None">
+    <Window.DataContext>
+        <vm:MainWindowViewModel/>
+    </Window.DataContext>
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}" />
+    </WindowChrome.WindowChrome>
     <Grid>
-        <TabControl>
-            <TabItem Header="Bin File">
-                <Frame>
-                    <Frame.Content>
-                        <pages:BinEditor/>
-                    </Frame.Content>
-                </Frame>
-            </TabItem>
-            <TabItem Header="Loc File">
-                <Frame>
-                    <Frame.Content>
-                        <pages:LocEditor/>
-                    </Frame.Content>
-                </Frame>
-            </TabItem>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="32"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0" Grid.ColumnSpan="3" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Menu Grid.Column="1" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" Background="Transparent">
+                <MenuItem Header="_File" BorderThickness="0" Height="32" VerticalAlignment="Stretch" VerticalContentAlignment="Center">
+                    <MenuItem Header="Open"/>
+                </MenuItem>
+                <MenuItem Header="View" BorderThickness="0" Height="32" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
+            </Menu>
+        </Grid>
+        <ToolBarTray Grid.Row="1" Grid.ColumnSpan="3" Background="Transparent">
+            <ToolBar Background="Transparent"/>
+        </ToolBarTray>
+        <TabControl Grid.Row="2" ItemsSource="{Binding OpenEditors}">
+            <TabControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type editors:FileEditor}">
+                    <DockPanel>
+                        <Label Content="{Binding Name}"/>
+                        <Button FontFamily="Segoe MDL2 Assets" Content="&#xE711;" ToolTipService.InitialShowDelay="10" ToolTip="Close" Margin="0" BorderThickness="0" Background="Transparent"/>
+                    </DockPanel>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <ItemContainerTemplate>
+                    <Frame Content="{Binding EditorContent}">
+                    </Frame>
+                </ItemContainerTemplate>
+            </TabControl.ContentTemplate> 
         </TabControl>
+        <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+        <dv:DirectoryTree x:Name="Explorer" RootDirectory="C:\\Users\\ChrisG\\Desktop\\BlurModified" Grid.Row="2" Grid.Column="2" OnFileOpened="{Binding OpenFileCommand}"/>
     </Grid>
 </Window>

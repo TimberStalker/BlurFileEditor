@@ -1,14 +1,15 @@
 ﻿using BlurFormats.BinFile;
 using BlurFormats.Loc;
 
-var filepath = "C:\\Users\\ChrisG\\Downloads\\settings_orig.ksl";
-//var filepath = "C:\\Users\\ChrisG\\Desktop\\BlurModified\\gamedata\\xt\\loc\\multiplayer.loc";
+//var filepath = "C:\\Users\\ChrisG\\Desktop\\BlurModified\\gamedata\\bklgi5q22\\bklgi5q22toc.bin";
+var filepath = "C:\\Users\\ChrisG\\Desktop\\BlurModified\\gamedata\\xt\\pickups.bin";
 //var filepath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "crowd.bin");
 if (filepath != null)
 {
     //var block = BinBlock.FromBytes(File.ReadAllBytes(filepath));
     //block.PrintTypes(Console.Out);
     var loc = BinBlock.FromBytes(File.ReadAllBytes(filepath));
+    loc.PrintTypes(Console.Out);
 }
 
 //var loc = new Localization();

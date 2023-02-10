@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,15 +19,13 @@ namespace BlurFileEditor.Pages;
 /// <summary>
 /// Interaction logic for LocEditor.xaml
 /// </summary>
-public partial class LocEditor : Page
+public partial class LocEditorPage : Page
 {
-    public LocEditor()
+    public LocEditorPage()
     {
         InitializeComponent();
     }
-
-    private void ListView_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+    public LocEditorPage(FileSystemInfo info) : this()
     {
-
     }
 }

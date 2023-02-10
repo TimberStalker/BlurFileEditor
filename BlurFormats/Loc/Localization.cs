@@ -15,7 +15,7 @@ public class Localization
     public ObservableCollection<Language> Languages { get; } = new ObservableCollection<Language>();
     public ObservableCollection<LocString> Strings { get; } = new ObservableCollection<LocString>();
 
-    public static Localization Create(byte[] bytes)
+    public static Localization CreateFrom(byte[] bytes)
     {
         var reader = new Reader(bytes);
         var loc = new Localization();
@@ -165,15 +165,15 @@ public class Localization
                 using var langTextStream = new MemoryStream();
                 using (var writer = new BinaryWriter(langTextStream))
                 {
-                    foreach (var item in locStrings)
+                    foreach (var item in locStrings.OrderBy(l => l.Id))
                     {
-                        langWriter.Write(item.Id);
-                        langWriter.Write((int)langTextStream.Position + langOffset + 8);
                         if (item.Texts.TryGetValue(language, out var text))
                         {
+                            langWriter.Write(item.Id);
+                            langWriter.Write((int)langTextStream.Position + langOffset + 8);
                             writer.Write(Encoding.Unicode.GetBytes(text.Text));
+                            writer.Write((short)0);
                         }
-                        writer.Write((short)0);
                     }
                 }
                 langWriter.Write(langTextStream.ToArray());

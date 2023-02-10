@@ -22,5 +22,6 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Explorer.RootDirectory = "C:\\Users\\ChrisG\\Desktop\\BlurModified";
     }
 }

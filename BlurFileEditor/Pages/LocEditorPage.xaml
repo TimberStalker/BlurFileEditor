@@ -1,0 +1,234 @@
+﻿<Page x:Class="BlurFileEditor.Pages.LocEditorPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:BlurFileEditor.Pages"
+      xmlns:loc="clr-namespace:BlurFormats.Loc;assembly=BlurFormats"
+      xmlns:db="clr-namespace:BlurFileEditor.ViewModels.DesignerViewModels.Pages"
+      xmlns:b="clr-namespace:BlurFileEditor.Behaviors"
+      xmlns:vm="clr-namespace:BlurFileEditor.ViewModels.Pages"
+      xmlns:anim="clr-namespace:BlurFileEditor.Utils.Animations"
+      mc:Ignorable="d" 
+      d:DataContext="{d:DesignInstance Type=db:DesignerLocEditorViewModel,IsDesignTimeCreatable=True}"
+      d:DesignHeight="450" d:DesignWidth="800"
+      Background="White">
+    <Page.DataContext>
+        <vm:LocEditorViewModel/>
+    </Page.DataContext>
+    <Page.Resources>
+        <CubicEase EasingMode="EaseOut" x:Key="LanguageSizeEase"/>
+        <Border x:Key="LanguagePlaceholder" CornerRadius="15" Height="30" Width="0" IsEnabled="False"/>
+    </Page.Resources>
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+            <TextBox Width="140" Text="{Binding SearchCriteria, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right" Margin="5,0"/>
+            <CheckBox x:Name="AllowRefEdit" Content="Allow Editing Ref Names" VerticalAlignment="Center" DockPanel.Dock="Right"/>
+        </DockPanel>
+        <ScrollViewer x:Name="LanguageViewer" DockPanel.Dock="Left" Background="Transparent" Width="40" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+            <ScrollViewer.Triggers>
+                <EventTrigger RoutedEvent="ScrollViewer.MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation To="120" Duration="0:0:0.4"
+                                DecelerationRatio="1"
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.TargetName="LanguageViewer"
+                                Storyboard.TargetProperty="Width"/>
+                            <DoubleAnimation To="110" Duration="0:0:0.4"
+                                DecelerationRatio="1"
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.TargetName="AddButton"
+                                Storyboard.TargetProperty="Width"/>
+                            <DoubleAnimation To="45" Duration="0:0:0.4"
+                                DecelerationRatio="1"
+                                Storyboard.TargetProperty="Width" 
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.Target="{StaticResource LanguagePlaceholder}"/>
+                            <BooleanAnimationUsingKeyFrames Duration="0:0:0.2"
+                                Storyboard.TargetProperty="IsEnabled" 
+                                Storyboard.Target="{StaticResource LanguagePlaceholder}">
+                                <BooleanKeyFrameCollection >
+                                    <DiscreteBooleanKeyFrame Value="True" KeyTime="0:0:0.2"/>
+                                </BooleanKeyFrameCollection>
+                            </BooleanAnimationUsingKeyFrames>
+                            <DoubleAnimation To="20" Duration="0:0:0.4"
+                                Storyboard.TargetProperty="Height" 
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.Target="{StaticResource LanguagePlaceholder}"/>
+                            <anim:CornerRadiusAnimation To="2" Duration="0:0:0.4"
+                                Storyboard.TargetProperty="CornerRadius" 
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.Target="{StaticResource LanguagePlaceholder}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="ScrollViewer.MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation To="40" Duration="0:0:0.4"
+                                DecelerationRatio="1"
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.TargetName="LanguageViewer"
+                                Storyboard.TargetProperty="Width"/>
+                            <DoubleAnimation To="30" Duration="0:0:0.4"
+                                DecelerationRatio="1"
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.TargetName="AddButton"
+                                Storyboard.TargetProperty="Width"/>
+                            <DoubleAnimation To="0" Duration="0:0:0.4"
+                                DecelerationRatio="1"
+                                Storyboard.TargetProperty="Width" 
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.Target="{StaticResource LanguagePlaceholder}"/>
+                            <BooleanAnimationUsingKeyFrames Duration="0:0:0.2"
+                                Storyboard.TargetProperty="IsEnabled" 
+                                Storyboard.Target="{StaticResource LanguagePlaceholder}">
+                                <BooleanKeyFrameCollection >
+                                    <DiscreteBooleanKeyFrame Value="False" KeyTime="0:0:0"/>
+                                </BooleanKeyFrameCollection>
+                            </BooleanAnimationUsingKeyFrames>
+                            <DoubleAnimation To="30" Duration="0:0:0.4"
+                                Storyboard.TargetProperty="Height" 
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.Target="{StaticResource LanguagePlaceholder}"/>
+                            <anim:CornerRadiusAnimation To="15" Duration="0:0:0.4"
+                                Storyboard.TargetProperty="CornerRadius" 
+                                EasingFunction="{StaticResource LanguageSizeEase}"
+                                Storyboard.Target="{StaticResource LanguagePlaceholder}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </ScrollViewer.Triggers>
+            <StackPanel HorizontalAlignment="Stretch">
+                <ListView ItemsSource="{Binding Localization.Languages, NotifyOnSourceUpdated=True}" BorderThickness="0" Padding="0" Margin="0" HorizontalAlignment="Stretch"  HorizontalContentAlignment="Center"  
+                          ScrollViewer.CanContentScroll="False" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Focusable" Value="false"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Height="34" Background="White">
+                                <Grid.Triggers>
+                                    <EventTrigger RoutedEvent="Grid.MouseEnter">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation To="30" Duration="0:0:0.1"
+                                                    Storyboard.TargetName="DeleteButton"
+                                                    Storyboard.TargetProperty="Width"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                    <EventTrigger RoutedEvent="Grid.MouseLeave">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation To="0" Duration="0:0:0.1"
+                                                    Storyboard.TargetName="DeleteButton"
+                                                    Storyboard.TargetProperty="Width"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Grid.Triggers>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition x:Name="LeftColumn" Width="{Binding Width,Source={StaticResource LanguagePlaceholder}}"/>
+                                    <ColumnDefinition Width="30"/>
+                                    <ColumnDefinition x:Name="RightColumn" Width="{Binding Width,Source={StaticResource LanguagePlaceholder}}"/>
+                                </Grid.ColumnDefinitions>
+                                <CheckBox HorizontalAlignment="Center" IsEnabled="True" VerticalAlignment="Center">
+                                </CheckBox>
+                                <Border x:Name="LanguageNameBorder" Grid.Column="1" Height="{Binding Height,Source={StaticResource LanguagePlaceholder}}" Background="#FFEDEDED">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="CornerRadius" Value="{Binding CornerRadius,Source={StaticResource LanguagePlaceholder}}"/>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True" MinWidth="30" MaxLength="2" BorderThickness="0"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             IsEnabled="{Binding IsEnabled,Source={StaticResource LanguagePlaceholder}}"
+                                             Background="Transparent" HorizontalContentAlignment="Center">
+                                    </TextBox>
+                                </Border>
+                                <Button x:Name="DeleteButton" ToolTip="Remove Language" FontFamily="Segoe MDL2 Assets" Content="&#xE711;" Width="0" HorizontalAlignment="Center" BorderThickness="0" Grid.Column="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="#FFEDEDED"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FF92D5FF"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="DeleteButtonBorder" CornerRadius="15" Width="{TemplateBinding Width}" Height="{TemplateBinding Width}" Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Button x:Name="AddButton" ToolTip="Add Language" Margin="0" FontFamily="Segoe MDL2 Assets" Content="&#xE710;" Width="30" HorizontalAlignment="Center" BorderThickness="0">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#FFEDEDED"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#FF92D5FF"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="AddButtonBorder" CornerRadius="15" Width="{TemplateBinding Width}" Height="30" Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </ScrollViewer>
+        <ListView ItemsSource="{Binding VisibleStrings}" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Expander BorderThickness="0">
+                        <Expander.Header>
+                            <DockPanel LastChildFill="False" HorizontalAlignment="Stretch">
+                                <Label Content="{Binding Id}" MinWidth="100" DockPanel.Dock="Right"/>
+                                <TextBox Text="{Binding Header}" IsEnabled="{Binding IsChecked, ElementName=AllowRefEdit}" AcceptsReturn="True" VerticalContentAlignment="Center"/>
+                                <Label DockPanel.Dock="Right" Width="30" Height="30" Visibility="Collapsed"  HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                    <Border Background="Yellow" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" CornerRadius="20">
+                                        <Label Content="!" TextBlock.TextAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0" VerticalContentAlignment="Center"/>
+                                    </Border>
+                                </Label>
+                            </DockPanel>
+                        </Expander.Header>
+
+                        <ListView ItemsSource="{Binding Texts}" b:IgnoreScrollingBehavior.IgnoreScrolling="True">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel LastChildFill="False">
+                                        <Label Content="{Binding Key.Name}" MinWidth="40"/>
+                                        <TextBox Text="{Binding Value.Text, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" VerticalContentAlignment="Center"/>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Expander>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </DockPanel>
+</Page>

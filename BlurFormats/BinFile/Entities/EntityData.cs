@@ -12,6 +12,7 @@ namespace BlurFormats.BinFile.Entities
     {
         public DataType DataType { get; set; }
         public DataField? DataField { get; set; }
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
         public T Value { get; set; }
 
         object IEntityData.Value => Value;

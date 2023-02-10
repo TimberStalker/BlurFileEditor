@@ -110,7 +110,7 @@ public sealed class BinBlock
                     var items = new List<IEntityData>();
                     for(int j = 0; j < block.Count; j++)
                     {
-                        switch (block.Unknown2)
+                        switch (block.PointerType)
                         {
                             case 0:
                                 var typeReader = reader.Subreader(readType.Size);
@@ -142,7 +142,7 @@ public sealed class BinBlock
                 entities.Add(entity);
             }
         }
-
+        var grouping = read.EntityDefinitions.GroupBy(e => e.EntityType);
         return result;
     }
     public static IEntityData ReadEntity(ref Reader reader, DataField readField, string stringPool, IReadOnlyList<DataType> dataTypes)
@@ -179,7 +179,7 @@ public sealed class BinBlock
                         DataField = readField
                     };
                 }
-                break;
+                break; 
             case var c:
                 throw new Exception($"Unknown read type {c}");
         }

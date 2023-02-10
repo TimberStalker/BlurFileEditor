@@ -21,7 +21,7 @@ public class BinEditorViewModel : ViewModelBase
         get => binTypesText;
         set {
             binTypesText = value;
-            OnPropertyChanged(nameof(BinTypesText));
+            UpdateProperty(nameof(BinTypesText));
         }
     }
     public ICommand LoadFile { get; private set; }
