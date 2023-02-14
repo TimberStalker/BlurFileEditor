@@ -9,6 +9,7 @@
       xmlns:db="clr-namespace:BlurFileEditor.ViewModels.DesignerViewModels.Pages"
       xmlns:b="clr-namespace:BlurFileEditor.Behaviors"
       xmlns:con="clr-namespace:BlurFileEditor.Controls.ComboBox"
+      xmlns:co="clr-namespace:BlurFileEditor.Controls"
       xmlns:c="clr-namespace:BlurFileEditor.Resources.Converters"
       xmlns:e="clr-namespace:BlurFormats.BlurData.Entities;assembly=BlurFormats"
       xmlns:vm="clr-namespace:BlurFileEditor.ViewModels.Pages"
@@ -26,56 +27,10 @@
         <c:EntityToResourceKeyConverter x:Key="EntityToResourceKeyConverter"/>
         <c:FieldToDataTypeDisplayConverter x:Key="FieldToDataTypeDisplayConverter"/>
         <c:EntityToExtraDataConverter x:Key="EntityToExtraDataConverter"/>
-        <c:EntityToStringFormatList x:Key="EntityToStringFormatList"/>
         <c:EntityTypeHasValueConverter x:Key="EntityTypeHasValueConverter"/>
         <c:FieldHasDataTypeDisplayConverter x:Key="FieldHasDataTypeDisplayConverter"/>
-        <c:TreeViewItemHasBorderConverter x:Key="TreeViewItemHasBorderConverter"/>
         <c:ValueImplementsTypeConverter x:Key="ValueImplementsTypeConverter"/>
         <c:GetValueTypeConverter x:Key="GetValueTypeConverter"/>
-        <b:EntityInternalTemplateSelector x:Key="EntityInternalTemplateSelector"/>
-
-        <DataTemplate x:Key="DefaultEntityTemplate">
-            <TextBox Text="{Binding ., Mode=OneWay}"/>
-        </DataTemplate>
-        
-        <DataTemplate x:Key="{x:Type e:StringContainer}" DataType="e:StringEntity">
-            <DockPanel>
-                <Label Content="&quot;" DockPanel.Dock="Left"/>
-                <Label Content="&quot;" DockPanel.Dock="Right"/>
-                <TextBox Text="{Binding Value.Value}" MinWidth="100"/>
-            </DockPanel>
-        </DataTemplate>
-        <DataTemplate x:Key="{x:Type sys:Boolean}" DataType="e:IEntity">
-            <CheckBox IsChecked="{Binding Value}"/>
-        </DataTemplate>
-        <DataTemplate x:Key="{x:Type e:EnumEntity}" DataType="e:EnumEntity">
-            <ComboBox SelectedIndex="{Binding Value}" MinWidth="50" Padding="2"
-                      VerticalContentAlignment="Center" ItemsSource="{Binding Type.Fields}"/>
-        </DataTemplate>
-        <DataTemplate x:Key="{x:Type e:FlagsEnumEntity}" DataType="e:FlagsEnumEntity">
-            <con:MultiSelectComboBox SelectedIndicies="{Binding Value}" MinWidth="50" Padding="2" MaxWidth="120"
-                      VerticalContentAlignment="Center" ItemsSource="{Binding Type.Fields}"/>
-        </DataTemplate>
-
-        <DataTemplate x:Key="{x:Type e:ObjectEntity}" DataType="{x:Type e:ObjectEntity}">
-            <ItemsControl ItemsSource="{Binding ., Converter={StaticResource EntityToStringFormatList}}" 
-                          VerticalAlignment="Center">
-                <ItemsControl.Resources>
-                    <DataTemplate DataType="{x:Type sys:String}">
-                        <TextBlock Text="{Binding .}" Padding="0"/>
-                    </DataTemplate>
-                    <DataTemplate DataType="{x:Type e:IEntity}">
-                        <ContentControl Content="{Binding .}" ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}"/>
-                    </DataTemplate>
-                </ItemsControl.Resources>
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel IsItemsHost="True" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
-        </DataTemplate>
-
     </Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -95,7 +50,7 @@
                         <TextBlock.Text>
                             <MultiBinding StringFormat="{}{0:000}/{1:000}">
                                 <Binding Path="VisiblePage"/>
-                                <Binding Path="TotalPages"/>
+                                <Binding Path="TotalPages" ElementName="RecordTree"/>
                             </MultiBinding>
                         </TextBlock.Text>
                     </TextBlock>
@@ -103,84 +58,11 @@
                 <Button Content="&gt;" Command="{Binding IncrementPageCommand}"/>
                 <Button Content="&gt;&gt;" Command="{Binding MaxIncrementPageCommand}"/>
             </DockPanel>
-            <TreeView ItemsSource="{Binding TreeRecords}" HorizontalContentAlignment="Stretch" >
-                <TreeView.Resources>
-                    <HierarchicalDataTemplate DataType="{x:Type e:ObjectEntityItem}" ItemsSource="{Binding Value.Value}">
-                        <DockPanel LastChildFill="False">
-                            <Label Content="{Binding Field, Converter={StaticResource FieldToDataTypeDisplayConverter}}" Padding="0"/>
-                            <Label Content="{Binding Field.Name}" Padding="0"/>
-                            <Label Content="=" Visibility="{Binding Value, Converter={StaticResource EntityTypeHasValueConverter}}"/>
-                            <ContentControl ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}" Content="{Binding Value}" Margin="3"/>
-                            <Label Content="{Binding Value, Converter={StaticResource EntityToExtraDataConverter}}"/>
-                        </DockPanel>
-                    </HierarchicalDataTemplate>
-
-                    <HierarchicalDataTemplate DataType="{x:Type e:ArrayEntityItem}" ItemsSource="{Binding Entity.Entity.Value}">
-                        <DockPanel LastChildFill="False">
-                            <Label Content="{Binding Index}" ContentStringFormat="[{0}]" Padding="0"/>
-                            <Label Content="{Binding Entity.Entity.Type.Name}" Padding="0"/>
-                            <Label Content="=" Visibility="{Binding Entity, Converter={StaticResource EntityTypeHasValueConverter}}" Padding="0"/>
-                            <ContentControl ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}" Content="{Binding Entity.Entity}" Margin="3"/>
-                            <Label Content="{Binding Entity, Converter={StaticResource EntityToExtraDataConverter}}" Padding="0"/>
-                        </DockPanel>
-                    </HierarchicalDataTemplate>
-
-                    <HierarchicalDataTemplate DataType="{x:Type bin:BlurRecord}" 
-                                  ItemsSource="{Binding Entity.Value}">
-                        <DockPanel LastChildFill="False">
-                            <Label Content="{Binding Entity.Type.Name}" DockPanel.Dock="Left" Padding="0"/>
-                            <Label Content="{Binding ID}" DockPanel.Dock="Right" Padding="0"/>
-                        </DockPanel>
-                    </HierarchicalDataTemplate>
-                    <Style x:Key="{x:Type TextBox}" TargetType="{x:Type TextBox}">
-                        <Style.Setters>
-                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                            <Setter Property="MinWidth" Value="25"/>
-                            <Setter Property="Margin" Value="0"/>
-                            <Setter Property="Padding" Value="0"/>
-                            <Setter Property="Height" Value="16"/>
-                        </Style.Setters>
-                    </Style>
-                    <Style x:Key="{x:Type Label}" TargetType="{x:Type Label}">
-                        <Style.Setters>
-                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                            <Setter Property="Margin" Value="3"/>
-                            <Setter Property="Padding" Value="0"/>
-                        </Style.Setters>
-                    </Style>
-                </TreeView.Resources>
-                <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource ExpandableItemTreeView}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ., Converter={StaticResource GetValueTypeConverter}}"
-                                         Value="{x:Type bin:BlurRecord}">
-                                <Setter Property="ContextMenu">
-                                    <Setter.Value>
-                                        <ContextMenu>
-                                            <MenuItem Header="Inspect" Command="{Binding InspectRecordCommand, ElementName=ViewModel}" CommandParameter="{Binding .}" Focusable="False"/>
-                                        </ContextMenu>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                        </Style.Triggers>
-                        <Setter Property="ContextMenu">
-                            <Setter.Value>
-                                <ContextMenu>
-                                    <MenuItem Header="{Binding Field.Name}" Focusable="False"/>
-                                    <MenuItem Header="{Binding Field.FieldType}" Focusable="False"/>
-                                    <Separator/>
-                                    <MenuItem Header="{Binding Value.Type}" Focusable="False"/>
-                                </ContextMenu>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TreeView.ItemContainerStyle>
-            </TreeView>
+            <co:RecordTreeView x:Name="RecordTree" ItemsPerPage="25" TotalPages="{Binding TotalPages, Mode=OneWayToSource}" 
+                               CurrentPage="{Binding CurrentPage}" EntityItems="{Binding Bin.Records, Mode=OneWay}"/>
         </DockPanel>
         <GridSplitter Grid.Column="1" Width="3" VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
-        <TreeView ItemsSource="{Binding Bin.DataTypes}" Grid.Column="2">
+        <TreeView ItemsSource="{Binding DataTypes}" Grid.Column="2">
             <TreeView.Resources>
                 <HierarchicalDataTemplate DataType="{x:Type bin:DataType}" ItemsSource="{Binding Fields}">
                     <DockPanel LastChildFill="False">
@@ -216,7 +98,7 @@
                                     <Style.Triggers>
                                         <MultiDataTrigger>
                                             <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding DataContext,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="{x:Type bin:DataType}"/>
+                                                <Condition Binding="{Binding DataContext,RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource GetValueTypeConverter}}" Value="{x:Type bin:DataType}"/>
                                                 <Condition Binding="{Binding DataContext.StructureType,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="1"/>
                                             </MultiDataTrigger.Conditions>
                                             <MultiDataTrigger.Setters>
@@ -225,7 +107,7 @@
                                         </MultiDataTrigger>
                                         <MultiDataTrigger>
                                             <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding DataContext,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="{x:Type bin:DataType}"/>
+                                                <Condition Binding="{Binding DataContext,RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource GetValueTypeConverter}}" Value="{x:Type bin:DataType}"/>
                                                 <Condition Binding="{Binding DataContext.StructureType,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="2"/>
                                             </MultiDataTrigger.Conditions>
                                             <MultiDataTrigger.Setters>

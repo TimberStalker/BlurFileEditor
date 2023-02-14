@@ -19,7 +19,6 @@ using System.Xml;
 namespace BlurFileEditor.ViewModels.Pages;
 public class BinEditorViewModel : ViewModelBase
 {
-    BinEditorPage? page;
     static int PageItemCount = 20;
     FileSystemInfo? info;
     string binTypesText = "";
@@ -27,6 +26,7 @@ public class BinEditorViewModel : ViewModelBase
 
     public BlurData Bin { get; set; }
     public IEnumerable<BlurRecord> TreeRecords => Bin.Records.Skip(CurrentPage * PageItemCount).Take(PageItemCount);
+    public IEnumerable<DataType> DataTypes => Bin.DataTypes.OrderBy(d => d.Name).OrderBy(d => d.StructureType);
     public int CurrentPage 
     { 
         get => currentPage; 
@@ -43,7 +43,7 @@ public class BinEditorViewModel : ViewModelBase
         } 
     }
     public int VisiblePage => CurrentPage + 1;
-    public int TotalPages => (int)Math.Ceiling(Bin.Records.Count / (double)PageItemCount);
+    public int TotalPages { get; set; }
 
     public ICommand MaxDecrementPageCommand { get; }
     public ICommand DecrementPageCommand { get; }
@@ -112,6 +112,7 @@ public class BinEditorViewModel : ViewModelBase
         Bin = block;
         BinTypesText = textStream.ToString();
         UpdateProperty(nameof(Bin));
+        UpdateProperty(nameof(DataTypes));
         UpdateProperty(nameof(TreeRecords));
         UpdateProperty(nameof(TotalPages));
         

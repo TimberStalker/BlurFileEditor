@@ -24,10 +24,7 @@ internal ref struct BlurDataDeserializer
 
     Stack<StringEntity> stringRequestsHydration;
     Stack<IHydrateableEntity> referenceRequestsHydration;
-
-    Stack<(IEntity, int)> requestsHydration;
-    Stack<(IEntity, int)> requestsTopLevelHydration;
-    Stack<(IEntity, int)> requestsExternalHydration;
+    Stack<ExternalReferenceEntity> referenceRequestsExternalHydration;
 
     Header dataTypesHeader;
     Header inheritenceHeader;
@@ -45,10 +42,7 @@ internal ref struct BlurDataDeserializer
 
         stringRequestsHydration = new Stack<StringEntity>();
         referenceRequestsHydration = new Stack<IHydrateableEntity>();
-
-        requestsHydration = new Stack<(IEntity, int)>();
-        requestsTopLevelHydration = new Stack<(IEntity, int)>();
-        requestsExternalHydration = new Stack<(IEntity, int)>();
+        referenceRequestsExternalHydration = new Stack<ExternalReferenceEntity>();
 
         r = new BinaryReader(stream, new BlurEncoding(), false);
 
@@ -119,7 +113,6 @@ internal ref struct BlurDataDeserializer
             ReadDataFieldDefinition(out fieldDefinitions[i]);
         }
         char[] typeNames = new BlurEncoding().GetChars(r.ReadBytes(typeNamesHeader.Length));
-        //char[] typeNames = r.ReadChars(typeNamesHeader.Length);
 
         foreach (var typeDefinition in typeDefinitions)
         {
@@ -213,11 +206,11 @@ internal ref struct BlurDataDeserializer
 
         //var recordPointerDataSource = new PointerDataSource(records);
 
-        //while (requestsExternalHydration.Count > 0)
-        //{
-        //    var (parent, index) = requestsExternalHydration.Pop();
-        //    HydrateEntityItem(parent, index, recordPointerDataSource);
-        //}
+        while (referenceRequestsExternalHydration.Count > 0)
+        {
+            var external = referenceRequestsExternalHydration.Pop();
+            external.Hydrate(records);
+        }
     }
 
     private List<EntityBlock> DeserializeRecord(in ReadOnlySpan<BlockDefinition> blockDefinitions, ref int currentBlock, in EntityDefinition recordInfo, RecordHeap heap)
@@ -244,18 +237,6 @@ internal ref struct BlurDataDeserializer
             referenceEntity.Hydrate(heap, entityBlocks);
         }
 
-        //while (requestsHydration.Count > 0)
-        //{
-        //    var (parent, index) = requestsHydration.Pop();
-        //    HydrateEntityItem(parent, index, pointerDataSource);
-        //}
-
-        //while (requestsTopLevelHydration.Count > 0)
-        //{
-        //    var (parent, index) = requestsTopLevelHydration.Pop();
-        //    HydrateEntityItem(parent, index, pointerDataSource);
-        //}
-
         return entityBlocks;
     }
 
@@ -269,11 +250,9 @@ internal ref struct BlurDataDeserializer
             {
                 0 => DeserializeType(blockType),
                 1 => new ForwardEntity(blockType, r.ReadInt16(), r.ReadInt16()),
-                2 => new ExternalPointerEntity(blockType, r.ReadInt32()),
+                2 => new ExternalForwardEntity(blockType, r.ReadInt32()),
                 _ => throw new NotImplementedException()
             };
-            if (newEntity is IExternalPointerEntity) requestsExternalHydration.Push((entities, j));
-            else if (newEntity is IPointerEntity) requestsTopLevelHydration.Push((entities, j));
             entities.Value.Add(newEntity);
         }
 
@@ -295,7 +274,9 @@ internal ref struct BlurDataDeserializer
                 referenceRequestsHydration.Push(pointerEntity);
                 return pointerEntity;
             case FieldType.ExternalPointer:
-                return new ExternalPointerEntity(field.DataType!, r.ReadInt32());
+                var extPointer = new ExternalReferenceEntity(field.DataType!, r.ReadInt32());
+                referenceRequestsExternalHydration.Push(extPointer);
+                return extPointer;
             case FieldType.PrimitiveArray:
             case FieldType.EnumArray:
             case FieldType.StructArray:
@@ -351,11 +332,6 @@ internal ref struct BlurDataDeserializer
                 {
                     DataField? field = type.Fields[i];
                     var fieldValue = DeserializeField(field);
-                    
-                    if (fieldValue is IExternalPointerEntity) 
-                        requestsExternalHydration.Push((entityResult, i + baseFieldCount));
-                    else if (fieldValue is IPointerEntity) 
-                        requestsHydration.Push((entityResult, i + baseFieldCount));
 
                     entityResult.Fields.Add(new ObjectEntityItem(field, fieldValue));
                 }

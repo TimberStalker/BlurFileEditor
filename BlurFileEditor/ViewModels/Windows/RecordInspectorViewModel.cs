@@ -9,6 +9,7 @@ namespace BlurFileEditor.ViewModels.Windows
 {
     public class RecordInspectorViewModel : ViewModelBase
     {
+        object? selectedItem;
         BlurRecord? record;
         public BlurRecord? Record 
         { 
@@ -16,8 +17,17 @@ namespace BlurFileEditor.ViewModels.Windows
             set
             {
                 record = value;
-                UpdateProperty(nameof(BlurRecord));
+                UpdateProperty(nameof(Record));
             }
+        }
+        public object? SelectedItem 
+        { 
+            get => selectedItem; 
+            set 
+            { 
+                selectedItem = value; 
+                UpdateProperty(nameof(SelectedItem)); 
+            } 
         }
         public RecordInspectorViewModel()
         {

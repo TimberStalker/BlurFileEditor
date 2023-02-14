@@ -18,15 +18,9 @@ internal class BinEditor : FileEditor
         var editorPage = new BinEditorPage();
 
         var model = (BinEditorViewModel)editorPage.DataContext;
-        try
-        {
-            model.SetPage(editorPage);
-            model.SetFileSource(info);
 
-        } catch(Exception ex)
-        {
-            MessageBox.Show(ex.Message);
-        }
+        model.SetPage(editorPage);
+        model.SetFileSource(info);
 
         this.editorContent = editorPage;
     }

@@ -1,12 +1,13 @@
 ﻿using BlurFormats.BlurData.Entities;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData;
-public sealed class BlurRecord
+public sealed class BlurRecord : IEnumerable<BlurRecord>
 {
     public uint ID { get; set; }
 	public IEntity Entity { get; set; }
@@ -24,10 +25,19 @@ public sealed class BlurRecord
         Entity = entity;
 		Heap = recordHeap;
     }
+
+    public IEnumerator<BlurRecord> GetEnumerator()
+    {
+        return new List<BlurRecord>{this}.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 public sealed class RecordHeap
 {
     List<IEntity> entities = new List<IEntity>();
+
+    public IReadOnlyList<IEntity> Entities => entities;
 	
 	public void AddEntity(IEntity entity)
     {

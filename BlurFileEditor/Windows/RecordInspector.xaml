@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BlurFileEditor.Windows"
         xmlns:vm="clr-namespace:BlurFileEditor.ViewModels.Windows"
+        xmlns:c="clr-namespace:BlurFileEditor.Controls"
         mc:Ignorable="d"
         Title="RecordInspector" Height="450" Width="800">
 
@@ -12,6 +13,13 @@
         <vm:RecordInspectorViewModel/>
     </Window.DataContext>
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="2"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <GridSplitter Grid.Column="1" Width="2"/>
+        <c:RecordTreeView Grid.Column="0" EntityItems="{Binding Record}"/>
+        <c:RecordTreeView Grid.Column="2" EntityItems="{Binding Record.Heap.Entities}" ItemsPerPage="-1"/>
     </Grid>
 </Window>

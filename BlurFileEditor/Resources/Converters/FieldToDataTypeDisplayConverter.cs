@@ -15,7 +15,9 @@ public class FieldToDataTypeDisplayConverter : IValueConverter
     {
         var field = (DataField)value;
 
-        StringBuilder result = new StringBuilder(field.DataType!.Name);
+        if (field.DataType is null) return "";
+
+        StringBuilder result = new StringBuilder(field.DataType.Name);
 
         if(field.FieldType is FieldType.Pointer or FieldType.PointerArray)
         {
