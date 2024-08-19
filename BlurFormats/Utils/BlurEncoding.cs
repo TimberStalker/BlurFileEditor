@@ -8,9 +8,15 @@ using System.Threading.Tasks;
 namespace BlurFormats.Utils;
 public class BlurEncoding : Encoding
 {
+    public int ChunkSize { get; set; } = 4;
+
+
     public override int GetByteCount(char[] chars, int index, int count)
     {
-        return count;
+        if (index + count > chars.Length) throw new ArgumentOutOfRangeException();
+        
+        if (count % ChunkSize == 0) return count;
+        return count + 4 - (count % ChunkSize);
     }
 
     public override int GetBytes(char[] chars, int charIndex, int charCount, byte[] bytes, int byteIndex)
@@ -18,9 +24,14 @@ public class BlurEncoding : Encoding
         int written = 0;
         int j = 0;
         int magic_var1 = 204;
-        for (int i = charIndex; i < charIndex + charCount; i++)
+
+        int totalBytes = charIndex + charCount;
+        if (totalBytes % ChunkSize > 0) totalBytes += 4 - (totalBytes % ChunkSize);
+
+
+        for (int i = charIndex; i < totalBytes; i++)
         {
-            byte b = bytes[i];
+            byte b = i >= chars.Length ? (byte)0 : (byte)chars[i];
             byte enryptedChar = (byte)((magic_var1 - b) ^ 179);
             magic_var1 = (byte)(magic_var1 + b - j);
 
@@ -40,13 +51,13 @@ public class BlurEncoding : Encoding
     {
         int written = 0;
         int j = 0;
-        int magic_var1 = 204;
+        int accumulator = 204;
         for (int i = byteIndex; i < byteIndex + byteCount; i++)
         {
             byte b = bytes[i];
 
-            byte originalChar = (byte)(magic_var1 - (b ^ 179));
-            magic_var1 = (byte)(magic_var1 + originalChar - j);
+            byte originalChar = (byte)(accumulator - (b ^ 179));
+            accumulator = (byte)(accumulator + originalChar - j);
 
             chars[charIndex + j++] = (char)originalChar;
             written++;
@@ -54,40 +65,10 @@ public class BlurEncoding : Encoding
         return written;
     }
 
-    public static string Decrypt(ReadOnlySpan<byte> bytes)
-    {
-        int i = 0;
-        int magic_var1 = 204;
-        Span<byte> result = stackalloc byte[bytes.Length];
-        foreach (var b in bytes)
-        {
-            byte originalChar = (byte)(magic_var1 - (b ^ 179));
-            magic_var1 = (byte)(magic_var1 + originalChar - i);
-
-            result[i++] = originalChar;
-        }
-
-        return Encoding.ASCII.GetString(result);
-    }
-    public static Span<byte> Encrypt(ReadOnlySpan<byte> bytes)
-    {
-        int i = 0;
-        int magic_var1 = 204;
-        byte[] result = new byte[bytes.Length];
-        foreach (var b in bytes)
-        {
-            byte enryptedChar = (byte)((magic_var1 - b) ^ 179);
-            magic_var1 = (byte)(magic_var1 + b - i);
-
-            result[i++] = enryptedChar;
-        }
-
-        return result;
-    }
-
     public override int GetMaxByteCount(int charCount)
     {
-        return charCount;
+        if(charCount % ChunkSize == 0) return charCount;
+        return charCount + 4 - (charCount % ChunkSize);
     }
 
     public override int GetMaxCharCount(int byteCount)

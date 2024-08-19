@@ -135,6 +135,8 @@ internal ref struct BlurDataSerializer
                 entitiesWriter.Write(i);
 
                 WriteEntityBlocks(record.Entity, dataWriter, blocksWriter, out int blockCount, out string names);
+                entitiesWriter.Write(names.Length);
+                dataWriter.Write(new BlurEncoding().GetBytes(names));
             }
             else
             {
@@ -149,6 +151,10 @@ internal ref struct BlurDataSerializer
     }
     void WriteEntityBlocks(IEntity entity, BinaryWriter dataWriter, BinaryWriter blocksWriter, out int length, out string names)
     {
+        List<(DataType, List<IEntity>)> entityBlocks = new List<(DataType, List<IEntity>)>
+        {
+            (entity.Type, new List<IEntity> { entity })
+        };
         Dictionary<string, int> addedStringIndecies = new Dictionary<string, int>();
         StringBuilder strings = new StringBuilder();
 

@@ -1,6 +1,7 @@
 ﻿using BlurFileEditor.Utils;
+using BlurFileEditor.Utils.FIlter;
 using BlurFileEditor.Windows;
-using BlurFormats.BlurData;
+using BlurFormats.Serialization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -23,28 +24,21 @@ namespace BlurFileEditor.Controls;
 /// </summary>
 public partial class RecordTreeView : UserControl, INotifyPropertyChanged
 {
-    public int CurrentPage
+
+    public object SelectedItem
     {
         get 
         { 
-            return (int)GetValue(CurrentPageProperty); 
+            return (object)GetValue(SelectedItemProperty); 
         }
         set 
         { 
-            SetValue(CurrentPageProperty, value);
+            if(SelectedItem != value)
+            {
+                SetValue(SelectedItemProperty, value);
+                SelectedItemChangedCommand?.Execute(SelectedItem);
+            }
         }
-    }
-
-    public int TotalPages
-    {
-        get => (int)GetValue(TotalPagesProperty);
-        set { }
-    }
-
-    public int ItemsPerPage
-    {
-        get { return (int)GetValue(ItemsPerPageProperty); }
-        set { SetValue(ItemsPerPageProperty, value); }
     }
 
     public IEnumerable<object> EntityItems
@@ -55,34 +49,49 @@ public partial class RecordTreeView : UserControl, INotifyPropertyChanged
             SetValue(EntityItemsProperty, value);
         }
     }
-
-    public IEnumerable<object>? VisibleItems => ItemsPerPage < 0 ? EntityItems : EntityItems?.Skip(ItemsPerPage * CurrentPage)?.Take(ItemsPerPage);
     public ICommand InspectRecordCommand { get; }
 
+    public Brush HighlightBrush
+    {
+        get { return (Brush)GetValue(HighlightBrushProperty); }
+        set { SetValue(HighlightBrushProperty, value); }
+    }
 
-    public static readonly DependencyProperty ItemsPerPageProperty =
-        DependencyProperty.Register("ItemsPerPage", typeof(int), typeof(RecordTreeView), new FrameworkPropertyMetadata(5, (source, e) => { ((RecordTreeView)source).SetTotalPages(); }));
+
+    public IEntityFilter HighlightFilter
+    {
+        get { return (IEntityFilter)GetValue(HighlightFilterProperty); }
+        set { SetValue(HighlightFilterProperty, value); }
+    }
+
+    public ICommand SelectedItemChangedCommand
+    {
+        get { return (ICommand)GetValue(SelectedItemChangedCommandProperty); }
+        set { SetValue(SelectedItemChangedCommandProperty, value); }
+    }
+
+    public static readonly DependencyProperty SelectedItemChangedCommandProperty =
+        DependencyProperty.Register("SelectedItemChangedCommand", typeof(ICommand), typeof(RecordTreeView), new FrameworkPropertyMetadata(null));
+
+
+
+    public static readonly DependencyProperty HighlightFilterProperty =
+        DependencyProperty.Register("HighlightFilter", typeof(IEntityFilter), typeof(RecordTreeView), new FrameworkPropertyMetadata(null));
+
+    public static readonly DependencyProperty SelectedItemProperty =
+        DependencyProperty.Register("SelectedItem", typeof(object), typeof(RecordTreeView), new FrameworkPropertyMetadata(null));
+
+    public static readonly DependencyProperty HighlightBrushProperty =
+        DependencyProperty.Register("HighlightColor", typeof(Brush), typeof(RecordTreeView), new FrameworkPropertyMetadata(new SolidColorBrush(Colors.Transparent)));
 
     public static readonly DependencyProperty EntityItemsProperty =
-        DependencyProperty.Register("EntityItems", typeof(IEnumerable<object>), typeof(RecordTreeView), new FrameworkPropertyMetadata(Enumerable.Empty<object>(), (source, e) => { ((RecordTreeView)source).SetTotalPages(); }));
-
-    public static readonly DependencyProperty CurrentPageProperty =
-        DependencyProperty.Register("CurrentPage", typeof(int), typeof(RecordTreeView), new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, (source, e) => 
-        {
-            var view = (RecordTreeView)source;
-            view.SetTotalPages();
-            view.UpdateProperty(nameof(CurrentPage));
-            view.UpdateProperty(nameof(VisibleItems));
-        }));
-
-    protected static readonly DependencyProperty TotalPagesProperty =
-        DependencyProperty.Register("TotalPages", typeof(int), typeof(RecordTreeView), new FrameworkPropertyMetadata(0));
+        DependencyProperty.Register("EntityItems", typeof(IEnumerable<object>), typeof(RecordTreeView), new FrameworkPropertyMetadata(Enumerable.Empty<object>()));
 
     public RecordTreeView()
     {
         InitializeComponent();
 
-        InspectRecordCommand = new Command<BlurRecord>((record) =>
+        InspectRecordCommand = new Command<SerializationRecord>((record) =>
         {
             if (record is null) return;
             new RecordInspector(record).Show();
@@ -90,15 +99,16 @@ public partial class RecordTreeView : UserControl, INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
-    void SetTotalPages()
-    {
-        SetValue(TotalPagesProperty, (int)Math.Ceiling((EntityItems?.Count() ?? 0) / (double)ItemsPerPage));
-    }
     public void UpdateProperty(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
     private void MenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not MenuItem m || m.DataContext is not BlurRecord record) return;
+        if (sender is not MenuItem m || m.DataContext is not SerializationRecord record) return;
         new RecordInspector(record).Show();
+    }
+
+    private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    {
+        SelectedItem = e.NewValue;
     }
 }

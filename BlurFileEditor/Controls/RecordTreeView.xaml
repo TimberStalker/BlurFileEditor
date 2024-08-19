@@ -4,111 +4,140 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:BlurFileEditor.Controls"
-             xmlns:bin="clr-namespace:BlurFormats.BlurData;assembly=BlurFormats"
-             xmlns:e="clr-namespace:BlurFormats.BlurData.Entities;assembly=BlurFormats"
+             xmlns:ser="clr-namespace:BlurFormats.Serialization;assembly=BlurFormats"
+             xmlns:e="clr-namespace:BlurFormats.Serialization.Entities;assembly=BlurFormats"
              xmlns:b="clr-namespace:BlurFileEditor.Behaviors"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:con="clr-namespace:BlurFileEditor.Controls.ComboBox"
+             xmlns:util="clr-namespace:BlurFileEditor.Utils"
              xmlns:c="clr-namespace:BlurFileEditor.Resources.Converters"
              mc:Ignorable="d" 
              x:Name="MainControl"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
-        <c:EntityToResourceKeyConverter x:Key="EntityToResourceKeyConverter"/>
-        <c:FieldToDataTypeDisplayConverter x:Key="FieldToDataTypeDisplayConverter"/>
-        <c:EntityToExtraDataConverter x:Key="EntityToExtraDataConverter"/>
-        <c:EntityToStringFormatList x:Key="EntityToStringFormatList"/>
-        <c:EntityTypeHasValueConverter x:Key="EntityTypeHasValueConverter"/>
-        <c:FieldHasDataTypeDisplayConverter x:Key="FieldHasDataTypeDisplayConverter"/>
-        <c:TreeViewItemHasBorderConverter x:Key="TreeViewItemHasBorderConverter"/>
-        <c:ValueImplementsTypeConverter x:Key="ValueImplementsTypeConverter"/>
+        <c:BoolToVisibilityConverter x:Key="BoolToVisibility" TrueValue="Visible" FalseValue="Collapsed"/>
+        <c:SaturateReferenceConverter x:Key="SaturateReference"/>
         <c:GetValueTypeConverter x:Key="GetValueTypeConverter"/>
-        <b:EntityInternalTemplateSelector x:Key="EntityInternalTemplateSelector"/>
-
-        <DataTemplate x:Key="DefaultEntityTemplate">
-            <TextBox Text="{Binding ., Mode=OneWay}"/>
-        </DataTemplate>
-
-        <ResourceDictionary x:Key="DataDisplayResources">
-            <DataTemplate x:Key="{x:Type e:StringContainer}" DataType="e:StringEntity">
-                <DockPanel>
-                    <Label Content="&quot;" DockPanel.Dock="Left"/>
-                    <Label Content="&quot;" DockPanel.Dock="Right"/>
-                    <TextBox Text="{Binding Value.Value}" MinWidth="100"/>
-                </DockPanel>
-            </DataTemplate>
-            <DataTemplate x:Key="{x:Type sys:Boolean}" DataType="e:IEntity">
-                <CheckBox IsChecked="{Binding Value}"/>
-            </DataTemplate>
-            <DataTemplate x:Key="{x:Type e:EnumEntity}" DataType="e:EnumEntity">
-                <ComboBox SelectedIndex="{Binding Value}" MinWidth="50" Padding="2"
-                      VerticalContentAlignment="Center" ItemsSource="{Binding Type.Fields}"/>
-            </DataTemplate>
-            <DataTemplate x:Key="{x:Type e:FlagsEnumEntity}" DataType="e:FlagsEnumEntity">
-                <con:MultiSelectComboBox SelectedIndicies="{Binding Value}" MinWidth="50" Padding="2" MaxWidth="120"
-                      VerticalContentAlignment="Center" ItemsSource="{Binding Type.Fields}"/>
-            </DataTemplate>
-
-            <DataTemplate x:Key="{x:Type e:ObjectEntity}" DataType="{x:Type e:ObjectEntity}">
-                <ItemsControl ItemsSource="{Binding ., Converter={StaticResource EntityToStringFormatList}}" 
-                          VerticalAlignment="Center">
-                    <ItemsControl.Resources>
-                        <DataTemplate DataType="{x:Type sys:String}">
-                            <TextBlock Text="{Binding .}" Padding="0"/>
-                        </DataTemplate>
-                        <DataTemplate DataType="{x:Type e:IEntity}">
-                            <ContentControl Content="{Binding .}" ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}"/>
-                        </DataTemplate>
-                    </ItemsControl.Resources>
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel IsItemsHost="True" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ItemsControl>
-            </DataTemplate>
-        </ResourceDictionary>
-
+        <c:MatchesFilterConverter x:Key="MatchesFilterConverter"/>
         <ContextMenu x:Key="RecordContextMenu">
             <MenuItem Header="Inspect" Click="MenuItem_Click" Command="{Binding InspectRecordCommand}" CommandParameter="{Binding .}" Focusable="False">
             </MenuItem>
         </ContextMenu>
+        <util:ResourceTypeTemplateSelector x:Key="EditTemplitSelector">
+            <util:ResourceTypeTemplateSelector.DefaultTemplate>
+                <DataTemplate>
+                    <TextBox Text="{Binding .}" Padding="10,0"  MinWidth="50" VerticalContentAlignment="Center"/>
+                </DataTemplate>
+            </util:ResourceTypeTemplateSelector.DefaultTemplate>
+            <util:ResourceTypeTemplateSelector.TemplateDictionary>
+                <ResourceDictionary>
+                    <DataTemplate DataType="{x:Type sys:Boolean}">
+                        <CheckBox IsChecked="{Binding .}" HorizontalAlignment="Right" VerticalContentAlignment="Center"/>
+                    </DataTemplate>
+                </ResourceDictionary>
+            </util:ResourceTypeTemplateSelector.TemplateDictionary>
+        </util:ResourceTypeTemplateSelector>
+        <ResourceDictionary x:Key="EntityContentTemplates" x:Name="EntityContentTemplates">
+
+            <DataTemplate DataType="{x:Type e:PrimitiveEntity}">
+                <ContentControl Content="{Binding Value}" ContentTemplateSelector="{StaticResource EditTemplitSelector}"/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type e:ArrayEntity}">
+                <Label Content="{Binding Entities.Count}" ContentStringFormat="[{0}]" VerticalContentAlignment="Center"/>
+            </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type e:NullEntity}">
+                <Label Content="Null" FontStyle="Italic" VerticalContentAlignment="Center"/>
+            </DataTemplate>
+            
+            <DataTemplate DataType="{x:Type e:RecordReferenceEntity}">
+                <Label Content="{Binding Record.ID}" ContentStringFormat="[{0}]" VerticalContentAlignment="Center"/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type e:EnumEntity}">
+                <ContentControl Content="{Binding}">
+                    <ContentControl.Style>
+                        <Style TargetType="{x:Type ContentControl}">
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate DataType="{x:Type e:EnumEntity}">
+                                        <ComboBox ItemsSource="{Binding Type.Values}" SelectedIndex="{Binding Value}"/>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsFlags}" Value="true">
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate DataType="{x:Type e:EnumEntity}">
+                                                <con:MultiSelectComboBox ItemsSource="{Binding Type.Values}" VerticalContentAlignment="Center" SelectedIndicies="{Binding Value}"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ContentControl.Style>
+                </ContentControl>
+            </DataTemplate>
+        </ResourceDictionary>
     </UserControl.Resources>
-    <TreeView ItemsSource="{Binding VisibleItems}" HorizontalContentAlignment="Stretch" DataContext="{Binding ElementName=MainControl}">
+    <TreeView ItemsSource="{Binding EntityItems}" SelectedItemChanged="TreeView_SelectedItemChanged" VirtualizingPanel.ScrollUnit="Item" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" HorizontalContentAlignment="Stretch" DataContext="{Binding ElementName=MainControl}">
         
         <TreeView.Resources>
-            <HierarchicalDataTemplate DataType="{x:Type e:ObjectEntity}" ItemsSource="{Binding Value}">
-                <Label Content="{Binding Type.Name}" HorizontalContentAlignment="Left"/>
+
+            <HierarchicalDataTemplate DataType="{x:Type ser:SerializationRecord}" ItemsSource="{Binding Entity.Children}">
+                <DockPanel LastChildFill="False">
+                    <Label Content="{Binding Entity.Type.Name}"/>
+                    <Label Content="{Binding ID}" DockPanel.Dock="Right"/>
+                </DockPanel>
+            </HierarchicalDataTemplate>
+            <HierarchicalDataTemplate DataType="{x:Type e:StructureEntity}" ItemsSource="{Binding Children}">
+                <DockPanel LastChildFill="False">
+                    <Label Content="{Binding Type.Name}"/>
+                </DockPanel>
+            </HierarchicalDataTemplate>
+            <HierarchicalDataTemplate DataType="{x:Type e:ArrayEntity}" ItemsSource="{Binding Children}">
+                <DockPanel LastChildFill="False">
+                    <Label Content="{Binding Type.Name}"/>
+                    <Label Content="{Binding Entities.Count}" ContentStringFormat="[{0}]"/>
+                </DockPanel>
+            </HierarchicalDataTemplate>
+            <HierarchicalDataTemplate DataType="{x:Type e:StructureFieldValue}" ItemsSource="{Binding Entity.Children}">
+                <DockPanel LastChildFill="False" HorizontalAlignment="Stretch">
+                    <Label Content="{Binding Field.DisplayType}"/>
+                    <Label Content="{Binding Field.Name}"/>
+                    <Label Content="{Binding Entity.Reference.Type.Name}"/>
+                    <ContentControl DockPanel.Dock="Right" Margin="0,0,20,0" Content="{Binding Entity, Converter={StaticResource SaturateReference}}" Resources="{StaticResource EntityContentTemplates}" 
+                                      Visibility="{Binding Entity.DisplaySimple, Converter={StaticResource BoolToVisibility}}"/>
+                    <DockPanel.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Add">
+                                <MenuItem.Style>
+                                    <Style TargetType="MenuItem">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Field.IsArray}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </MenuItem.Style>
+                            </MenuItem>
+                        </ContextMenu>
+                    </DockPanel.ContextMenu>
+                </DockPanel>
+            </HierarchicalDataTemplate>
+            <HierarchicalDataTemplate DataType="{x:Type e:ArrayEntityItem}" ItemsSource="{Binding Reference.Children}">
+                <DockPanel LastChildFill="False">
+                    <Label Content="{Binding Index}" ContentStringFormat="[{0}]"/>
+                    <Label Content="{Binding Reference.Reference.Type.Name}" />
+                    <ContentControl Content="{Binding Reference.Reference}" DockPanel.Dock="Right" Margin="0,0,20,0" Resources="{StaticResource EntityContentTemplates}" 
+                                      Visibility="{Binding Reference.Reference.DisplaySimple, Converter={StaticResource BoolToVisibility}}"/>
+                </DockPanel>
             </HierarchicalDataTemplate>
             
-            <HierarchicalDataTemplate DataType="{x:Type e:ObjectEntityItem}" ItemsSource="{Binding Value.Value}">
-                <DockPanel LastChildFill="False">
-                    <Label Content="{Binding Field, Converter={StaticResource FieldToDataTypeDisplayConverter}}" Padding="0"/>
-                    <Label Content="{Binding Field.Name}" Padding="0"/>
-
-                    <Label Content="=" Visibility="{Binding Value, Converter={StaticResource EntityTypeHasValueConverter}}"/>
-                    <ContentControl ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}" Resources="{StaticResource DataDisplayResources}" Content="{Binding Value}" Margin="3"/>
-                    <Label Content="{Binding Value, Converter={StaticResource EntityToExtraDataConverter}}"/>
-                </DockPanel>
-            </HierarchicalDataTemplate>
-
-            <HierarchicalDataTemplate DataType="{x:Type e:ArrayEntityItem}" ItemsSource="{Binding Entity.Entity.Value}">
-                <DockPanel LastChildFill="False">
-                    <Label Content="{Binding Index}" ContentStringFormat="[{0}]" Padding="0"/>
-                    <Label Content="{Binding Entity.Entity.Type.Name}" Padding="0"/>
-                    <Label Content="=" Visibility="{Binding Entity, Converter={StaticResource EntityTypeHasValueConverter}}" Padding="0"/>
-                    <ContentControl ContentTemplateSelector="{StaticResource EntityInternalTemplateSelector}" Resources="{StaticResource DataDisplayResources}" Content="{Binding Entity.Entity}" Margin="3"/>
-                    <Label Content="{Binding Entity, Converter={StaticResource EntityToExtraDataConverter}}" Padding="0"/>
-                </DockPanel>
-            </HierarchicalDataTemplate>
-
-            <HierarchicalDataTemplate DataType="{x:Type bin:BlurRecord}" 
-                                  ItemsSource="{Binding Entity.Value}">
-                <DockPanel LastChildFill="False">
-                    <Label Content="{Binding Entity.Type.Name}" DockPanel.Dock="Left" Padding="0"/>
-                    <Label Content="{Binding ID}" DockPanel.Dock="Right" Padding="0"/>
-                </DockPanel>
-            </HierarchicalDataTemplate>
             <Style x:Key="{x:Type TextBox}" TargetType="{x:Type TextBox}">
                 <Style.Setters>
                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -119,6 +148,7 @@
                     <Setter Property="Height" Value="16"/>
                 </Style.Setters>
             </Style>
+            
             <Style x:Key="{x:Type Label}" TargetType="{x:Type Label}">
                 <Style.Setters>
                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -128,12 +158,22 @@
                 </Style.Setters>
             </Style>
         </TreeView.Resources>
+        
         <TreeView.ItemContainerStyle>
             <Style TargetType="TreeViewItem" BasedOn="{StaticResource ExpandableItemTreeView}">
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding ., Converter={StaticResource GetValueTypeConverter}}"
-                                         Value="{x:Type bin:BlurRecord}">
+                                         Value="{x:Type ser:SerializationRecord}">
                         <Setter Property="ContextMenu" Value="{StaticResource RecordContextMenu}"/>
+                    </DataTrigger>
+                    <DataTrigger Value="True">
+                        <DataTrigger.Binding>
+                            <MultiBinding Converter="{StaticResource MatchesFilterConverter}">
+                                <Binding Path="HighlightFilter" ElementName="MainControl"/>
+                                <Binding Path="."/>
+                            </MultiBinding>
+                        </DataTrigger.Binding>
+                        <Setter Property="Background" Value="{Binding HighlightBrush, ElementName=MainControl}"/>
                     </DataTrigger>
                 </Style.Triggers>
                 <Setter Property="ContextMenu">

@@ -227,15 +227,15 @@
         </ControlTemplate>
 
         <DataTemplate x:Key="MultiBindingSelectedDisplay">
-            <ItemsControl ItemsSource="{Binding .}" VerticalAlignment="Stretch">
+            <ItemsControl ItemsSource="{Binding .}" Margin="4" VerticalContentAlignment="Center" VerticalAlignment="Center">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" IsItemsHost="True" Margin="0"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" IsItemsHost="True" Margin="0"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="|" VerticalAlignment="Stretch" Margin="2,0" HorizontalAlignment="Left">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -277,7 +277,7 @@
               ItemsSource="{Binding ItemsSource,ElementName=MainControl}" Padding="{Binding Padding, ElementName=MainControl}" Margin="0">
         <ComboBox.ItemTemplate>
             <DataTemplate>
-                <CheckBox Content="{Binding ., Mode=OneWay}" IsHitTestVisible="False">
+                <CheckBox Content="{Binding ., Mode=OneWay}" VerticalContentAlignment="Center" IsHitTestVisible="False">
                     <CheckBox.IsChecked>
                         <MultiBinding Converter="{StaticResource ItemSelectedConverter}" Mode="OneWay">
                             <Binding ElementName="MainControl" Path="SelectedIndicies"/>
@@ -324,7 +324,7 @@
                                     </theme:SystemDropShadowChrome>
                                 </Popup>
                                 <ToggleButton x:Name="toggleButton" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Grid.ColumnSpan="2" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Style="{StaticResource ComboBoxToggleButton}"/>
-                                <ContentPresenter x:Name="contentPresenter" ContentTemplate="{StaticResource MultiBindingSelectedDisplay}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" IsHitTestVisible="false" Margin="{TemplateBinding Padding}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <ContentPresenter x:Name="contentPresenter" ContentTemplate="{StaticResource MultiBindingSelectedDisplay}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" HorizontalAlignment="Stretch" IsHitTestVisible="false" Margin="{TemplateBinding Padding}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="Stretch">
                                     <ContentPresenter.Content>
                                         <MultiBinding Converter="{StaticResource ItemsFromFlagEnumConverter}">
                                             <Binding ElementName="MainControl" Path="ItemsSource"/>

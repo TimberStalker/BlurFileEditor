@@ -20,5 +20,5 @@ public enum PrimitiveType
     Float,
     Double,
     String,
-    Localaization = 14
+    Localization = 14
 }

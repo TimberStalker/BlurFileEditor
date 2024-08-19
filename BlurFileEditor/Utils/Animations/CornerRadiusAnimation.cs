@@ -86,7 +86,10 @@ namespace BlurFileEditor.Utils.Animations
         public bool IsCumulative { get; set; }
         public override bool IsDestinationDefault => true;
 
-        public CornerRadiusAnimation Clone() => new CornerRadiusAnimation(From ?? new CornerRadius(), To ?? new CornerRadius(), Duration, FillBehavior) { IsAdditive = IsAdditive, IsCumulative = IsCumulative };
+        //public CornerRadiusAnimation Clone()
+        //{
+        //    return new CornerRadiusAnimation(From ?? new CornerRadius(), To ?? new CornerRadius(), Duration, FillBehavior) { IsAdditive = IsAdditive, IsCumulative = IsCumulative };
+        //}
         protected override Freezable CreateInstanceCore() => new CornerRadiusAnimation();
         protected override CornerRadius GetCurrentValueCore(CornerRadius defaultOriginValue, CornerRadius defaultDestinationValue, AnimationClock animationClock)
         {

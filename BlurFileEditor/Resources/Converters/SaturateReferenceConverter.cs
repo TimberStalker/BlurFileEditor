@@ -1,4 +1,4 @@
-﻿using BlurFormats.BlurData.Entities;
+﻿using BlurFormats.Serialization.Entities;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -8,16 +8,15 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 
 namespace BlurFileEditor.Resources.Converters;
-
-public class EntityToExtraDataConverter : IValueConverter
+public class SaturateReferenceConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if(value is ArrayEntity a) 
+        if(value is ReferenceEntity r)
         {
-            return $"[{a.Value.Count}]";
+            return r.Reference;
         }
-        return "";
+        return value;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

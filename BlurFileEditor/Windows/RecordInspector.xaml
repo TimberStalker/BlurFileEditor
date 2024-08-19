@@ -19,7 +19,11 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <GridSplitter Grid.Column="1" Width="2"/>
-        <c:RecordTreeView Grid.Column="0" EntityItems="{Binding Record}"/>
-        <c:RecordTreeView Grid.Column="2" EntityItems="{Binding Record.Heap.Entities}" ItemsPerPage="-1"/>
+        <c:RecordTreeView Grid.Column="0" HighlightFilter="{Binding Filter}" HighlightBrush="Yellow" 
+                          SelectedItemChangedCommand="{Binding SelectedItemChanged}" 
+                          EntityItems="{Binding Record.EntityAsEumerable}"/>
+        <c:RecordTreeView Grid.Column="2" HighlightFilter="{Binding Filter}" HighlightBrush="Yellow"
+                          SelectedItemChangedCommand="{Binding SelectedItemChanged}" 
+                          EntityItems="{Binding Record.RecordHeap}"/>
     </Grid>
 </Window>

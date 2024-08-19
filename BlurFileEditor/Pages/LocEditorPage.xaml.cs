@@ -28,4 +28,12 @@ public partial class LocEditorPage : Page
     public LocEditorPage(FileSystemInfo info) : this()
     {
     }
+
+    private void MenuItemToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if(sender is MenuItem item)
+        {
+            item.IsChecked = !item.IsChecked;
+        }
+    }
 }

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Entities;
-public class ArrayEntity : IEntity, IHydrateableEntity
+public class ArrayEntity : IEntity, IArrayEntity, IHydrateableEntity
 {
     private readonly int type;
     private readonly int offset;

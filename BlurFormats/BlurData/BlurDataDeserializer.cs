@@ -1,6 +1,5 @@
 ﻿using BlurFormats.BlurData.Entities.Pointers;
 using BlurFormats.BlurData.Entities;
-using BlurFormats.BlurData.Read;
 using BlurFormats.BlurData.Types;
 using BlurFormats.Utils;
 using System;
@@ -13,6 +12,8 @@ using System.Security.AccessControl;
 using static System.Net.Mime.MediaTypeNames;
 using System.Drawing;
 using System.Reflection.PortableExecutable;
+using System.Net.WebSockets;
+using BlurFormats.Serialization.Definitions;
 
 namespace BlurFormats.BlurData;
 internal ref struct BlurDataDeserializer
@@ -24,7 +25,7 @@ internal ref struct BlurDataDeserializer
 
     Stack<StringEntity> stringRequestsHydration;
     Stack<IHydrateableEntity> referenceRequestsHydration;
-    Stack<ExternalReferenceEntity> referenceRequestsExternalHydration;
+    Stack<IExternalHydrateableEntity> referenceRequestsExternalHydration;
 
     Header dataTypesHeader;
     Header inheritenceHeader;
@@ -42,7 +43,7 @@ internal ref struct BlurDataDeserializer
 
         stringRequestsHydration = new Stack<StringEntity>();
         referenceRequestsHydration = new Stack<IHydrateableEntity>();
-        referenceRequestsExternalHydration = new Stack<ExternalReferenceEntity>();
+        referenceRequestsExternalHydration = new Stack<IExternalHydrateableEntity>();
 
         r = new BinaryReader(stream, new BlurEncoding(), false);
 
@@ -64,8 +65,8 @@ internal ref struct BlurDataDeserializer
 
     public void ReadHeader(out Header header)
     {
-        int start = r.ReadInt32();
-        int length = r.ReadInt32();
+        uint start = r.ReadUInt32();
+        uint length = r.ReadUInt32();
         header = new Header(start, length);
     }
 
@@ -82,13 +83,13 @@ internal ref struct BlurDataDeserializer
     }
     public void ReadDataFieldDefinition(out DataFieldDefinition field)
     {
-
         short nameOffset = r.ReadInt16();
         short baseType = r.ReadInt16();
         short offset = r.ReadInt16();
-        short fieldType = r.ReadInt16();
+        byte fieldType = r.ReadByte();
+        byte isArray = r.ReadByte();
 
-        field = new DataFieldDefinition(nameOffset, baseType, offset, fieldType);
+        field = new DataFieldDefinition(nameOffset, baseType, offset, fieldType, isArray);
     }
 
     public BlurData ToBlurData() 
@@ -97,9 +98,9 @@ internal ref struct BlurDataDeserializer
     }
     public void DeserializeDataTypes()
     {
-        Span<DataTypeDefinition> typeDefinitions = stackalloc DataTypeDefinition[dataTypesHeader.Length];
-        Span<int> inheritenceDefinitions = stackalloc int[inheritenceHeader.Length];
-        Span<DataFieldDefinition> fieldDefinitions = stackalloc DataFieldDefinition[dataFieldsHeader.Length];
+        Span<DataTypeDefinition> typeDefinitions = stackalloc DataTypeDefinition[(int)dataTypesHeader.Length];
+        Span<int> inheritenceDefinitions = stackalloc int[(int)inheritenceHeader.Length];
+        Span<DataFieldDefinition> fieldDefinitions = stackalloc DataFieldDefinition[(int)dataFieldsHeader.Length];
         for (int i = 0; i < dataTypesHeader.Length; i++)
         {
             ReadDataTypeDefinition(out typeDefinitions[i]);
@@ -112,7 +113,7 @@ internal ref struct BlurDataDeserializer
         {
             ReadDataFieldDefinition(out fieldDefinitions[i]);
         }
-        char[] typeNames = new BlurEncoding().GetChars(r.ReadBytes(typeNamesHeader.Length));
+        char[] typeNames = new BlurEncoding().GetChars(r.ReadBytes((int)typeNamesHeader.Length));
 
         foreach (var typeDefinition in typeDefinitions)
         {
@@ -164,21 +165,21 @@ internal ref struct BlurDataDeserializer
 
     public void DeserializeRecords()
     {
-        Span<RecordDefinition> recordDefinitions = stackalloc RecordDefinition[recordsHeader.Length];
-        Span<EntityDefinition> entityDefinitions = stackalloc EntityDefinition[entitiesHeader.Length];
+        Span<RecordDefinition> recordDefinitions = stackalloc RecordDefinition[(int)recordsHeader.Length];
+        Span<EntityDefinition> entityDefinitions = stackalloc EntityDefinition[(int)entitiesHeader.Length];
         Span<BlockDefinition> blockDefinitions = new BlockDefinition[blocksHeader.Length];
 
         for (int i = 0; i < recordsHeader.Length; i++)
         {
-            RecordDefinition.Read(r, ref recordDefinitions[i]);
+            recordDefinitions[i] = RecordDefinition.Read(r);
         }
         for (int i = 0; i < entitiesHeader.Length; i++)
         {
-            EntityDefinition.Read(r, out entityDefinitions[i]);
+            entityDefinitions[i] = EntityDefinition.Read(r);
         }
         for (int i = 0; i < blocksHeader.Length; i++)
         {
-            BlockDefinition.Read(r, out blockDefinitions[i]);
+            blockDefinitions[i] = BlockDefinition.Read(r);
         }
 
         if (r.BaseStream.Position % 4 != 0)
@@ -209,7 +210,7 @@ internal ref struct BlurDataDeserializer
         while (referenceRequestsExternalHydration.Count > 0)
         {
             var external = referenceRequestsExternalHydration.Pop();
-            external.Hydrate(records);
+            //external.Hydrate(records);
         }
     }
 
@@ -239,7 +240,7 @@ internal ref struct BlurDataDeserializer
 
         return entityBlocks;
     }
-
+    
     private EntityBlock DeserializeBlock(BlockDefinition entityBlock)
     {
         var blockType = types[entityBlock.DataType];
@@ -294,7 +295,9 @@ internal ref struct BlurDataDeserializer
                     var pointer = r.ReadInt16();
                     var modifier = r.ReadInt16();
                     var fieldLength = r.ReadInt32();
-                    return new ExternalArrayPointerEntity(field.DataType!, pointer, modifier, fieldLength, field.FieldType);
+                    var extArrayEntity = new ExternalArrayEntity(field.DataType!, pointer, modifier, fieldLength);
+                    referenceRequestsExternalHydration.Push(extArrayEntity);
+                    return extArrayEntity;
                 }
             case var c:
                 throw new Exception($"Unknown read type {c}");
@@ -355,7 +358,7 @@ internal ref struct BlurDataDeserializer
         PrimitiveType.Float => new PrimitiveEntity<float>(dataType, r.ReadSingle()),
         PrimitiveType.Double => new PrimitiveEntity<double>(dataType, r.ReadDouble()),
         PrimitiveType.String => new StringEntity(dataType, r.ReadInt32()),
-        PrimitiveType.Localaization => new LocPointerEntity(dataType, r.ReadInt32()),
+        PrimitiveType.Localization => new LocPointerEntity(dataType, r.ReadInt32()),
         var i => throw new Exception($"{i} is not yet a handled decode type.")
     };
 

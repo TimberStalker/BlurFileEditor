@@ -18,7 +18,7 @@ public abstract class CornerRadiusAnimationBase : AnimationTimeline
     }
 
 
-    public ThicknessAnimationBase Clone() => Clone();
+    //public ThicknessAnimationBase Clone() => Clone();
     public sealed override object GetCurrentValue(object defaultOriginValue, object defaultDestinationValue, AnimationClock animationClock) => GetCurrentValue((CornerRadius)defaultOriginValue, (CornerRadius)defaultDestinationValue, animationClock);
     public CornerRadius GetCurrentValue(CornerRadius defaultOriginValue, CornerRadius defaultDestinationValue, AnimationClock animationClock) => GetCurrentValueCore(defaultOriginValue, defaultDestinationValue, animationClock);
     protected abstract CornerRadius GetCurrentValueCore(CornerRadius defaultOriginValue, CornerRadius defaultDestinationValue, AnimationClock animationClock);

@@ -20,7 +20,7 @@ public class ExternalForwardEntity : IEntity
         this.offset = offset;
     }
 
-    public BlurRecord GetRecord(List<BlurRecord> blocks)
+    public BlurRecord GetRecord(IReadOnlyList<BlurRecord> blocks)
     {
         return blocks[offset];
     }

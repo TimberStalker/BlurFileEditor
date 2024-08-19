@@ -5,9 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Entities;
-public class ExternalReferenceEntity : IEntity
+public class ExternalReferenceEntity : IEntity, IExternalHydrateableEntity
 {
-    RecordHeap? heap;
     int Offset { get; }
     public BlurRecord? Record { get; set; }
 
@@ -16,11 +15,10 @@ public class ExternalReferenceEntity : IEntity
     public IEntity Entity => Record?.Entity ?? new NullEntity(Type);
     public object Value => Entity.Value;
 
-    public ExternalReferenceEntity(DataType type, RecordHeap heap)
+    public ExternalReferenceEntity(DataType type)
     {
         Type = type;
         Guid = Guid.NewGuid();
-        this.heap = heap;
     }
     public ExternalReferenceEntity(DataType type, int offset)
     {
@@ -29,7 +27,7 @@ public class ExternalReferenceEntity : IEntity
         Offset = offset;
     }
 
-    public void Hydrate(List<BlurRecord> records)
+    public void Hydrate(IReadOnlyList<BlurRecord> records, List<EntityBlock> block)
     {
         if (Offset < 0) return;
         

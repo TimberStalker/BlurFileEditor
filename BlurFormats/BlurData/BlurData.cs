@@ -1,6 +1,5 @@
 ﻿using BlurFormats.BlurData.Entities;
 using BlurFormats.BlurData.Entities.Pointers;
-using BlurFormats.BlurData.Read;
 using BlurFormats.BlurData.Types;
 using BlurFormats.Utils;
 using System.Collections.ObjectModel;

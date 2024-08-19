@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BlurFormats.BlurData.Entities;
-public class ArrayEntityItem
+public class ArrayEntityItem : IArrayEntityItem
 {
     public ArrayEntity Parent { get; }
     public ReferenceEntity Entity { get; }

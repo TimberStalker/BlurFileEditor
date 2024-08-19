@@ -1,23 +1,16 @@
 ﻿using BlurFileEditor.Editors;
 using BlurFileEditor.Utils;
 using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Security.RightsManagement;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media.Animation;
-using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace BlurFileEditor.ViewModels.Windows;
-public class MainWindowViewModel : ViewModelBase
+public class MainWindowViewModel : ObservableObject
 {
-    private CommonOpenFileDialog direcotryOpenerDialogue;
+    private OpenFolderDialog directoryOpenerDialogue;
 
     public string EditorDirectory { get; set; }
     public ObservableCollection<FileEditor> OpenEditors { get; }
@@ -28,9 +21,10 @@ public class MainWindowViewModel : ViewModelBase
 	public MainWindowViewModel()
 	{
         EditorDirectory = "";
-        direcotryOpenerDialogue = new CommonOpenFileDialog() 
+        directoryOpenerDialogue = new OpenFolderDialog() 
         {
-            IsFolderPicker = true
+            AddToRecent = true,
+            Multiselect = false,
         };
 
         OpenEditors = new ObservableCollection<FileEditor>();
@@ -62,21 +56,14 @@ public class MainWindowViewModel : ViewModelBase
         });
         SetEditorDirectory = new Command(() =>
         {
-            var result = direcotryOpenerDialogue.ShowDialog();
-            switch (result)
+            var result = directoryOpenerDialogue.ShowDialog();
+            if(result == true)
             {
-                case CommonFileDialogResult.Ok:
-                    EditorDirectory = direcotryOpenerDialogue.FileName;
+                    EditorDirectory = directoryOpenerDialogue.FolderName;
                     OpenEditors.Clear();
 
                     UpdateProperty(nameof(OpenEditors));
                     UpdateProperty(nameof(EditorDirectory));
-
-                    break;
-                case CommonFileDialogResult.None:
-                case CommonFileDialogResult.Cancel:
-                default:
-                    break;
             }
         });
     }

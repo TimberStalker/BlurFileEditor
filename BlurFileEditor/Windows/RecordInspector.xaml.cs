@@ -1,5 +1,5 @@
 ﻿using BlurFileEditor.ViewModels.Windows;
-using BlurFormats.BlurData;
+using BlurFormats.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace BlurFileEditor.Windows
     /// </summary>
     public partial class RecordInspector : Window
     {
-        public RecordInspector(BlurRecord record)
+        public RecordInspector(SerializationRecord record)
         {
             InitializeComponent();
             ((RecordInspectorViewModel)DataContext).Record = record;

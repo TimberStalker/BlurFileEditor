@@ -20,7 +20,7 @@ public static class Extensions
     }
     public static string GetTerminatedString(this char[] chars, int offset)
     {
-        if (offset >= chars.Length || chars[offset] == (char)0) return "";
+        if (offset < 0 || offset >= chars.Length || chars[offset] == (char)0) return "";
         var builder = new StringBuilder();
 
         char nextchar;

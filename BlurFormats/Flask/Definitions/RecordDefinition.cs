@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlurFormats.BlurData.Read;
+namespace BlurFormats.Serialization.Definitions;
 [DebuggerDisplay("Type:{BaseType} Specifics:{EntitySpecifics} - {GlobalID}")]
-public struct RecordDefinition : IReadable
+public struct RecordDefinition
 {
     public uint ID { get; private set; }
     public short BaseType { get; private set; }
@@ -19,17 +19,11 @@ public struct RecordDefinition : IReadable
         BaseType = baseType;
         Entity = entity;
     }
-    public void Read(ref Reader reader)
-    {
-        ID = reader.ReadUInt();
-        BaseType = reader.ReadShort();
-        Entity = reader.ReadShort();
-    }
-    public static void Read(BinaryReader reader, ref RecordDefinition record)
+    public static RecordDefinition Read(BinaryReader reader)
     {
         uint id = reader.ReadUInt32();
         short baseType = reader.ReadInt16();
         short entity = reader.ReadInt16();
-        record = new RecordDefinition(id, baseType, entity);
+        return new RecordDefinition(id, baseType, entity);
     }
 }

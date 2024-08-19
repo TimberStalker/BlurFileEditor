@@ -5,7 +5,8 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:sys="clr-namespace:System;assembly=mscorlib"
       xmlns:local="clr-namespace:BlurFileEditor.Pages"
-      xmlns:bin="clr-namespace:BlurFormats.BlurData;assembly=BlurFormats"
+      xmlns:ser="clr-namespace:BlurFormats.Serialization;assembly=BlurFormats"
+      xmlns:sert="clr-namespace:BlurFormats.Serialization.Types;assembly=BlurFormats"
       xmlns:db="clr-namespace:BlurFileEditor.ViewModels.DesignerViewModels.Pages"
       xmlns:b="clr-namespace:BlurFileEditor.Behaviors"
       xmlns:con="clr-namespace:BlurFileEditor.Controls.ComboBox"
@@ -24,13 +25,18 @@
         <vm:BinEditorViewModel x:Name="ViewModel"/>
     </Page.DataContext>
     <Page.Resources>
-        <c:EntityToResourceKeyConverter x:Key="EntityToResourceKeyConverter"/>
-        <c:FieldToDataTypeDisplayConverter x:Key="FieldToDataTypeDisplayConverter"/>
-        <c:EntityToExtraDataConverter x:Key="EntityToExtraDataConverter"/>
-        <c:EntityTypeHasValueConverter x:Key="EntityTypeHasValueConverter"/>
-        <c:FieldHasDataTypeDisplayConverter x:Key="FieldHasDataTypeDisplayConverter"/>
-        <c:ValueImplementsTypeConverter x:Key="ValueImplementsTypeConverter"/>
-        <c:GetValueTypeConverter x:Key="GetValueTypeConverter"/>
+        <Style TargetType="Label">
+            <Setter Property="Padding" Value="0,2"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <c:StringToEntityFilterConverter x:Key="EntitySearchFilter"/>
+        <ControlTemplate x:Key="TypeLabelDisplay" TargetType="Label">
+            <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            RecognizesAccessKey="True" />
+            </Border>
+        </ControlTemplate>
     </Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -40,87 +46,59 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition/>
+            <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
-        <DockPanel>
-            <DockPanel DockPanel.Dock="Bottom" LastChildFill="False">
-                <Button Content="&lt;&lt;" Command="{Binding MaxDecrementPageCommand}"/>
-                <Button Content="&lt;" Command="{Binding DecrementPageCommand}"/>
-                <Label>
-                    <TextBlock>
-                        <TextBlock.Text>
-                            <MultiBinding StringFormat="{}{0:000}/{1:000}">
-                                <Binding Path="VisiblePage"/>
-                                <Binding Path="TotalPages" ElementName="RecordTree"/>
-                            </MultiBinding>
-                        </TextBlock.Text>
-                    </TextBlock>
-                </Label>
-                <Button Content="&gt;" Command="{Binding IncrementPageCommand}"/>
-                <Button Content="&gt;&gt;" Command="{Binding MaxIncrementPageCommand}"/>
-            </DockPanel>
-            <co:RecordTreeView x:Name="RecordTree" ItemsPerPage="25" TotalPages="{Binding TotalPages, Mode=OneWayToSource}" 
-                               CurrentPage="{Binding CurrentPage}" EntityItems="{Binding Bin.Records, Mode=OneWay}"/>
+        <co:RecordTreeView x:Name="RecordTree" EntityItems="{Binding Entities, Mode=OneWay}"/>
+        <DockPanel Grid.Row="1" LastChildFill="False">
+            <TextBox Width="300" VerticalAlignment="Center" Text="{Binding Entities.EntityFilter, ValidatesOnExceptions=True, Converter={StaticResource EntitySearchFilter}, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"/>
+            <TextBlock Text="Search:" VerticalAlignment="Center" DockPanel.Dock="Right"/>
         </DockPanel>
         <GridSplitter Grid.Column="1" Width="3" VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
-        <TreeView ItemsSource="{Binding DataTypes}" Grid.Column="2">
+        <TreeView ItemsSource="{Binding DataTypes}" Grid.Column="2" Grid.IsSharedSizeScope="True">
             <TreeView.Resources>
-                <HierarchicalDataTemplate DataType="{x:Type bin:DataType}" ItemsSource="{Binding Fields}">
-                    <DockPanel LastChildFill="False">
-                        <TextBlock Padding="2" Margin="0,2">
-                            <TextBlock.Text>
-                                <MultiBinding StringFormat="{}{0} {1}">
-                                    <Binding Path="StructureType"/>
-                                    <Binding Path="Name"/>
-                                </MultiBinding>
-                            </TextBlock.Text>
-                        </TextBlock>
-                        <DockPanel VerticalAlignment="Center">
-                            <TextBlock Text=" : "/>
-                            <TextBlock Text="{Binding Base.Name}"/>
-                            <DockPanel.Style>
-                                <Style TargetType="DockPanel">
+                <DataTemplate DataType="{x:Type sert:PrimitiveType}">
+                    <DockPanel>
+                        <Label Content="primitive" Margin="0,2" Background="#AF0" Width="60" HorizontalContentAlignment="Center" Template="{StaticResource ResourceKey=TypeLabelDisplay}"/>
+                        <Label Content="{Binding Name}" ContentStringFormat=" {0} "/>
+                        <Label Content="{Binding Primitive}"/>
+                    </DockPanel>
+                </DataTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type sert:StructureType}" ItemsSource="{Binding Fields}">
+                    <DockPanel>
+                        <Label Content="struct" Margin="0,2" Background="#9AD" Width="60" HorizontalContentAlignment="Center" Template="{StaticResource ResourceKey=TypeLabelDisplay}"/>
+                        <Label Content="{Binding Name}" ContentStringFormat=" {0} "/>
+                        <Label Content="{Binding Base.Name}" ContentStringFormat=": {0}"/>
+                    </DockPanel>
+                </HierarchicalDataTemplate>
+                <DataTemplate DataType="{x:Type sert:StructureField}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition SharedSizeGroup="{Binding Base.Name}"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="{Binding DisplayType}" Grid.Column="0"/>
+                        <Label Content="{Binding Name}" Margin="2,0" Grid.Column="2"/>
+                    </Grid>
+                </DataTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type sert:EnumType}" ItemsSource="{Binding Values}">
+                    <DockPanel>
+                        <Label Content="enum" Margin="0,2" Background="#AF00" Width="60" HorizontalContentAlignment="Center" Template="{StaticResource ResourceKey=TypeLabelDisplay}"/>
+                        <Label Content="{Binding Name}" ContentStringFormat=" {0}"/>
+                        <Label Content=": flags" IsEnabled="{Binding IsFlags}">
+                            <Label.Style>
+                                <Style TargetType="Label">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Base}" Value="{x:Null}">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        <DataTrigger Binding="{Binding IsFlags}" Value="true">
+                                            <Setter Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </DockPanel.Style>
-                        </DockPanel>
+                            </Label.Style>
+                        </Label>
                     </DockPanel>
                 </HierarchicalDataTemplate>
-                <DataTemplate DataType="{x:Type bin:DataField}">
-                    <DockPanel HorizontalAlignment="Stretch">
-                        <TextBlock Text="{Binding ., Converter={StaticResource FieldToDataTypeDisplayConverter}}"
-                                   Margin="0,0,5,0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding DataContext,RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource GetValueTypeConverter}}" Value="{x:Type bin:DataType}"/>
-                                                <Condition Binding="{Binding DataContext.StructureType,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="1"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <MultiDataTrigger.Setters>
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                            </MultiDataTrigger.Setters>
-                                        </MultiDataTrigger>
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding DataContext,RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource GetValueTypeConverter}}" Value="{x:Type bin:DataType}"/>
-                                                <Condition Binding="{Binding DataContext.StructureType,RelativeSource={RelativeSource Mode=TemplatedParent}}" Value="2"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <MultiDataTrigger.Setters>
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                            </MultiDataTrigger.Setters>
-                                        </MultiDataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <TextBlock Text="{Binding Name, StringFormat='{}{0};'}" MaxWidth="250"/>
-                    </DockPanel>
-                </DataTemplate>
             </TreeView.Resources>
             <TreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}">

@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlurFormats.BlurData.Read;
+namespace BlurFormats.Serialization.Definitions;
 [DebuggerDisplay("{DataType} {Count} {PointerType}")]
-public struct BlockDefinition : IReadable
+public struct BlockDefinition
 {
     public short DataType { get; set; }
     public short Count { get; set; }
@@ -19,18 +19,11 @@ public struct BlockDefinition : IReadable
         Count = count;
         PointerType = pointerType;
     }
-    public void Read(ref Reader reader)
-    {
-        DataType = reader.ReadShort();
-        Count = reader.ReadShort();
-        PointerType = reader.ReadShort();
-    }
-
-    public static void Read(BinaryReader reader, out BlockDefinition blockDefinition)
+    public static BlockDefinition Read(BinaryReader reader)
     {
         short dataType = reader.ReadInt16();
         short count = reader.ReadInt16();
         short pointerType = reader.ReadInt16();
-        blockDefinition = new BlockDefinition(dataType, count, pointerType);
+        return new BlockDefinition(dataType, count, pointerType);
     }
 }

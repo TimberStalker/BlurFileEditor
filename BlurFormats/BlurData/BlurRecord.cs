@@ -35,6 +35,8 @@ public sealed class BlurRecord : IEnumerable<BlurRecord>
 }
 public sealed class RecordHeap
 {
+    public IEntity this[int index] => this[index];
+
     List<IEntity> entities = new List<IEntity>();
 
     public IReadOnlyList<IEntity> Entities => entities;

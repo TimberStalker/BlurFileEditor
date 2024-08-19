@@ -171,7 +171,7 @@ public class BlurLocalization
                         {
                             langWriter.Write(item.Id);
                             langWriter.Write((int)langTextStream.Position + langOffset + 8);
-                            writer.Write(Encoding.Unicode.GetBytes(text.Text));
+                            writer.Write(Encoding.Unicode.GetBytes(text));
                             writer.Write((short)0);
                         }
                     }
@@ -187,13 +187,7 @@ public class BlurLocalization
     {
         public uint Id { get; set; }
         public string Header { get; set; } = "";
-        public Dictionary<Language, WrappedString> Texts { get; } = new Dictionary<Language, WrappedString>();
-    }
-    public class WrappedString
-    {
-        public string Text { get; set; } = "";
-
-        public static implicit operator WrappedString(string text) => new WrappedString() { Text = text };
+        public Dictionary<Language, string> Texts { get; } = new Dictionary<Language, string>();
     }
     public class Language
     {
