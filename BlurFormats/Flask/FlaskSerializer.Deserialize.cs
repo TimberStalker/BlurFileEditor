@@ -23,11 +23,16 @@ public partial class FlaskSerializer
     {
         var serialization = new BlurSerialization();
         var reader = new EndiannessAwareBinaryReader(stream);
-        //reader.Endianness = Endianness.Big;
 
         int format = reader.ReadInt32();
-        if (format != 0x464C534B) throw new Exception("Provided bytes are not of the KSLF(bin) format.");
-
+        if (format != 0x464C534B)
+        {
+            if(format == 0x4B534C46)
+            {
+                reader.Endianness = Endianness.Big;
+            }
+            throw new Exception("Provided bytes are not of the KSLF(bin) format.");
+        }
         int magicNumber = reader.ReadInt32();
         if (magicNumber != 2) throw new Exception($"Magic number is not correct. Should be '2' but instead is '{magicNumber}'.");
 

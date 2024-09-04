@@ -1,7 +1,5 @@
-﻿using Microsoft.VisualBasic;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,20 +15,12 @@ using System.Windows.Shapes;
 
 namespace BlurFileEditor.Pages;
 /// <summary>
-/// Interaction logic for LocEditor.xaml
+/// Interaction logic for TextEditorPage.xaml
 /// </summary>
-public partial class LocEditorPage : Page
+public partial class TextEditorPage : Page
 {
-    public LocEditorPage()
+    public TextEditorPage()
     {
         InitializeComponent();
-    }
-
-    private void MenuItemToggle_Click(object sender, RoutedEventArgs e)
-    {
-        if(sender is MenuItem item)
-        {
-            item.IsChecked = !item.IsChecked;
-        }
     }
 }

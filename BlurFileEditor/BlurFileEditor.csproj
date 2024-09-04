@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\BlurFileFormats\BlurFileFormats.csproj" />
     <ProjectReference Include="..\BlurFormats\BlurFormats.csproj" />
   </ItemGroup>
 
