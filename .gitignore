@@ -362,3 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /BlurFileEditor/Resources/Converters/ItemToIndexConverter.cs
+
+# Allow Glfw Libs
+!./libs/GLFW/
