@@ -364,4 +364,4 @@ FodyWeavers.xsd
 /BlurFileEditor/Resources/Converters/ItemToIndexConverter.cs
 
 # Allow Glfw Libs
-!./libs/GLFW/
+!/libs/GLFW/
