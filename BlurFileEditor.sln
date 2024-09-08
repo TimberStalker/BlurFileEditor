@@ -3,10 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlurFormats", "BlurFormats\BlurFormats.csproj", "{EBF532DC-E36B-4866-A73C-129F026894F6}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlurFormatTester", "BlurFormatTester\BlurFormatTester.csproj", "{4EDE37B8-FA0D-4243-8091-3A778F7E1F35}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileEditor", "FileEditor\FileEditor.csproj", "{9F44C71A-A118-42D9-B6B3-EFD5BB6398B9}"
 EndProject
 Global

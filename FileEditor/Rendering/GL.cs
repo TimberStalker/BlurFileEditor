@@ -3,6 +3,7 @@ using System.Text;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 namespace Editor.Rendering
 {
     public static unsafe class GL
@@ -4916,3 +4917,5 @@ namespace Editor.Rendering
         public static void glPolygonOffsetClamp(float factor, float units, float clamp) => _glPolygonOffsetClamp(factor, units, clamp);
     }
 }
+
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
