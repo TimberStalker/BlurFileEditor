@@ -70,10 +70,10 @@ namespace Editor.Rendering.IMGUI {
         private uint vboHandle, elementsHandle;
         
         //Marshal forced me to use this, otherwise everything will crash upon init
-        private GLFWmousebuttonfun userCallbackMouseButton;
-        private GLFWscrollfun userCallbackScroll;
-        private GLFWkeyfun userCallbackKey;
-        private GLFWcharfun userCallbackChar;
+        private GLFWmousebuttonfun? userCallbackMouseButton;
+        private GLFWscrollfun? userCallbackScroll;
+        private GLFWkeyfun? userCallbackKey;
+        private GLFWcharfun? userCallbackChar;
 
         private delegate void SetClipboardTextFunc(IntPtr _userData, string _text);
         private delegate void GetClipboardTextFunc(IntPtr _userData);

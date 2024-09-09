@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using static Editor.Rendering.GL;
 using Exception = System.Exception;
@@ -15,23 +16,24 @@ namespace Editor.Rendering {
         /// <summary>
         /// Invoked before <see cref="onUpdate"/>.
         /// </summary>
-        private Action onPreUpdate = null;
+        private Action? onPreUpdate = null;
         /// <summary>
         /// Invoked when it's time to update.
         /// </summary>
-        private Action onUpdate = null;
+        private Action? onUpdate = null;
         /// <summary>
         /// Invoked after <see cref="onUpdate"/>.
         /// </summary>
-        private Action onPostUpdate = null;
+        private Action? onPostUpdate = null;
 
         #endregion
-        
+
         #region Properties
 
         /// <summary>
         /// The current <see cref="Window"/> instance running.
         /// </summary>
+        [AllowNull]
         public static Window Instance { get; private set; }
 
         /// <summary>
