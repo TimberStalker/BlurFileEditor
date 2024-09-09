@@ -8,15 +8,15 @@ namespace Editor.Drawers
     {
         static Dictionary<string, ITypeDrawer> Drawers { get; } = [];
 
-        public static bool HasDrawer(IXtValue value) => value is XtNullValue ? false : HasDrawer(value.Type);
+        public static bool HasDrawer(IXtValue value) => HasDrawer(value.Type);
         public static bool HasDrawer(IXtType type) => HasDrawer(type.Name);
         public static bool HasDrawer(string type) => Drawers.ContainsKey(type);
 
-        public static bool HasTitle(IXtValue value) => value is XtNullValue ? false : HasTitle(value.Type);
+        public static bool HasTitle(IXtValue value) => HasTitle(value.Type);
         public static bool HasTitle(IXtType type) => HasTitle(type.Name);
         public static bool HasTitle(string type) => HasDrawer(type) && GetDrawer(type) is ITypeTitleDrawer;
 
-        public static bool HasContent(IXtValue value) => value is XtNullValue ? false : HasContent(value.Type);
+        public static bool HasContent(IXtValue value) => HasContent(value.Type);
         public static bool HasContent(IXtType type) => HasContent(type.Name);
         public static bool HasContent(string type) => HasDrawer(type) && GetDrawer(type) is ITypeContentDrawer;
 

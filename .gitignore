@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Allow Glfw Libs
 !./libs/GLFW/*
+
+#Exclude Blur
+/Blur

@@ -299,7 +299,7 @@ namespace Editor
                     {
                         if (i < state.pathComponents.Count() - 1)
                         {
-                            state.Path = Path.Join(state.pathComponents[0..(i + 1)]);
+                            state.Path = Path.Join(state.pathComponents[0..(i + 1)]) + Path.DirectorySeparatorChar;
                         }
                     }
                     i++;
@@ -310,13 +310,12 @@ namespace Editor
                     Console.WriteLine("Switch to text entry");
                     state.textEdit = true;
                 }
-                //var debugCol = new Vector4(255, 0, 0, 255);
-                //unsafe
-                //{
-                //    ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), (uint)&debugCol);
-                //}
                 ImGui.PopStyleVar();
                 ImGui.EndGroup();
+                unsafe
+                {
+                    ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), 0xFF7A7A7A);
+                }
             }
 
         }

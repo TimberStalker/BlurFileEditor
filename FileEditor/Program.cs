@@ -3,13 +3,15 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Numerics;
+using System.Reflection.Emit;
 using System.Runtime.InteropServices;
+using System.Text;
 using BlurFileFormats.XtFlask;
-using BlurFileFormats.XtFlask.Types.Fields.Behaviors;
 using BlurFileFormats.XtFlask.Values;
 using Editor.Drawers;
 using Editor.Rendering;
 using ImGuiNET;
+using Pango;
 using ImGuiController = Editor.Rendering.IMGUI.ImGuiController;
 
 namespace Editor
@@ -193,6 +195,8 @@ public class XtEditorWindow : IWindow
                 var value = a.Values[i];
                 DrawArrayItem(i, value);
             }
+            ImGui.SetNextItemWidth(200);
+            ImGui.Button("Add");
         }
     }
 
@@ -252,36 +256,6 @@ public class XtEditorWindow : IWindow
         }
         bool showContent = ImGui.TreeNodeEx(field.Name, flags | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap, field.Type.Name);
 
-        switch (field.Behavior)
-        {
-            case ArrayFieldBehavior a:
-                switch (field.Behavior)
-                {
-                    case PointerFieldBehavior p:
-
-                        ImGui.SameLine(ImGui.GetColumnOffset(), 1);
-                        ImGui.Text("*");
-                        break;
-                    case HandleFieldBehavior h:
-
-                        ImGui.SameLine(ImGui.GetColumnOffset(), 1);
-                        ImGui.Text("^");
-                        break;
-                }
-                ImGui.SameLine(ImGui.GetColumnOffset(), 1);
-                ImGui.Text("[]");
-                break;
-            case PointerFieldBehavior p:
-
-                ImGui.SameLine(ImGui.GetColumnOffset(), 1);
-                ImGui.Text("*");
-                break;
-            case HandleFieldBehavior h:
-
-                ImGui.SameLine(ImGui.GetColumnOffset(), 1);
-                ImGui.Text("^");
-                break;
-        }
         ImGui.SameLine();
         ImGui.Text(field.Name);
 
@@ -293,19 +267,7 @@ public class XtEditorWindow : IWindow
         var fieldValue = item.Value;
 
         bool showContent = DrawFieldLabel(item);
-
-        if (!TypeDrawer.DrawTitle(fieldValue))
-        {
-            if (fieldValue is XtEnumValue v)
-            {
-                ImGui.PushItemWidth(160);
-                int c = (int)v.Value;
-                ImGui.SameLine();
-                ImGui.Combo("##enum", ref c, v.XtType.Labels.ToArray(), v.XtType.Labels.Count);
-                ImGui.PopItemWidth();
-                v.Value = (uint)c;
-            }
-        }
+        DrawTitleContent(fieldValue);
         if (showContent)
         {
             if (!TypeDrawer.DrawContent(fieldValue))
@@ -318,5 +280,68 @@ public class XtEditorWindow : IWindow
             ImGui.TreePop();
         }
         return showContent;
+    }
+
+    private static void DrawTitleContent(IXtValue fieldValue)
+    {
+        if (!TypeDrawer.DrawTitle(fieldValue))
+        {
+            if (fieldValue is XtEnumValue v)
+            {
+                int c = (int)v.Value;
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(160);
+                ImGui.Combo("##enum", ref c, v.XtType.Labels.ToArray(), v.XtType.Labels.Count);
+                v.Value = (uint)c;
+            } else if(fieldValue is XtFlagsValue f)
+            {
+                uint c = f.Value;
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(160);
+                MultiCombo("##flags", ref c, f.XtType.Labels);
+                f.Value = c;
+            }
+        }
+    }
+    static void MultiCombo(string label, ref uint flags, IEnumerable<string> flagNames)
+    {
+        string text = "";
+        if (flags == 0)
+        {
+            text = "None";
+        }
+        else
+        {
+            if (flags > 0)
+            {
+                uint nameFlags = flags;
+                StringBuilder builder = new();
+                foreach (var item in flagNames)
+                {
+                    if (nameFlags == 0) break;
+                    if ((nameFlags & 1) == 1)
+                    {
+                        builder.Append(item);
+                        builder.Append(',');
+                    }
+                    nameFlags >>= 1;
+                }
+                text = builder.Remove(builder.Length - 1, 1).ToString();
+            }
+        }
+        if (ImGui.BeginCombo(label, text))
+        {
+            uint i = 1;
+            foreach (var flag in flagNames)
+            {
+                //bool isSet = (flags & 1 << i) > 0;
+                ImGui.CheckboxFlags(flag, ref flags, i);
+                //int x = 1;
+                //if (isSet) x = 0;
+                //flags ^= x << i;
+                i <<= 1;
+            }
+            ImGui.EndCombo();
+        }
     }
 }

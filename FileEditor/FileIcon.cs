@@ -9,7 +9,7 @@ public sealed class FileIcon
     [SupportedOSPlatform("windows")]
     static SKBitmap GetIconBitmapWindows(string filePath)
     {
-        var icon = System.Drawing.Icon.ExtractAssociatedIcon(filePath)!;
+        var icon = Icon.ExtractAssociatedIcon(filePath)!;
         if (icon == null)
         {
             throw new Exception("Icon not found.");
