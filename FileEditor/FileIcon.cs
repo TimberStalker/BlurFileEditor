@@ -3,7 +3,6 @@ using SkiaSharp;
 using Gdk;
 using System.Runtime.Versioning;
 using System.Drawing;
-using Gtk;
 
 public sealed class FileIcon
 {
@@ -26,17 +25,10 @@ public sealed class FileIcon
     static SKBitmap GetIconBitmapLinux(string filePath)
     {
         // Get the file icon using Gdk
-        IconLookupFlags flags = IconLookupFlags.UseBuiltin;
-        IconTheme theme = IconTheme.Default;
-        string iconName = theme.LookupIcon(filePath, 48, flags)?.Filename!;
-        
-        if (iconName == null)
-        {
-            throw new Exception("Icon not found.");
-        }
+        GLib.FileIcon icon = new GLib.FileIcon(GLib.FileFactory.NewForPath(filePath));
 
         // Load the icon as a Pixbuf
-        Pixbuf pixbuf = theme.LoadIcon(iconName, 48, flags);
+        Pixbuf pixbuf = new Pixbuf(icon.File.Path);
 
         if (pixbuf == null)
         {
