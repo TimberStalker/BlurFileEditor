@@ -12,8 +12,8 @@ namespace Editor
         struct FileDialogueState
         {
             public bool open;
-            public string path = "C:\\";
-            public string editPath = "C:\\";
+            public string path = Environment.CurrentDirectory;
+            public string editPath = Environment.CurrentDirectory;
             public string selectedFile = "";
             public bool directoriesDirty = true;
             public List<FileData> fileSystemEntries { get; } = [];
@@ -108,7 +108,7 @@ namespace Editor
                             switch (info)
                             {
                                 case DirectoryInfo d:
-                                    state.path = Path.Combine(state.path, d.Name) + "\\";
+                                    state.path = Path.Combine(state.path, d.Name) + Path.DirectorySeparatorChar;
                                     state.editPath = state.path;
                                     state.directoriesDirty = true;
                                     break;
@@ -226,7 +226,7 @@ namespace Editor
                         switch (info)
                         {
                             case DirectoryInfo d:
-                                state.path = Path.Combine(state.path, d.Name) + "\\";
+                                state.path = Path.Combine(state.path, d.Name) + Path.DirectorySeparatorChar;
                                 state.editPath = state.path;
                                 state.directoriesDirty = true;
                                 break;
