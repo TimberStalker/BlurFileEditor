@@ -3,7 +3,6 @@ using System.Numerics;
 using System.Text;
 using Editor.Rendering;
 using ImGuiNET;
-using Window = Editor.Rendering.Window;
 
 namespace Editor
 {
@@ -20,6 +19,7 @@ namespace Editor
             public List<string> pathHistory = [];
             public string selectedFile = "";
             public bool directoriesDirty;
+            public bool textEdit;
             public string Path
             {
                 get => pathHistoryIndex == 0 ? path : pathHistory[^(pathHistoryIndex)];
@@ -34,7 +34,7 @@ namespace Editor
                     path = value;
                     directoriesDirty = true;
                     editPath = path;
-                    pathComponents = path.Split(System.IO.Path.DirectorySeparatorChar);
+                    pathComponents = path.Split(System.IO.Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
                 }
             }
 
@@ -80,30 +80,8 @@ namespace Editor
 
                 }
                 ImGui.SameLine();
-                ImGui.SetNextItemWidth(ImGui.GetWindowContentRegionWidth() - ImGui.GetColumnOffset());
-                ImGui.BeginGroup();
+                DirectoryPath(ref state);
 
-                int i = 0;
-                foreach (var item in state.pathComponents)
-                {
-                    ImGui.SameLine();
-                    ImGui.ArrowButton($"arrow {i}", ImGuiDir.Right);
-                    ImGui.SameLine();
-                    ImGui.Button(item);
-                }
-
-                ImGui.EndGroup();
-                //if (ImGui.InputText("##path", ref state.editPath, 255, ImGuiInputTextFlags.EnterReturnsTrue))
-                //{
-                //    if (Path.EndsInDirectorySeparator(state.editPath) && Path.Exists(state.editPath))
-                //    {
-                //        state.Path = state.editPath;
-                //    }
-                //    else
-                //    {
-                //        state.editPath = state.Path;
-                //    }
-                //}
                 ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowContentRegionWidth(), ImGui.GetWindowHeight() - 85));
 
 
@@ -209,44 +187,8 @@ namespace Editor
 
                 }
                 ImGui.SameLine();
-                ImGui.SetNextItemWidth(ImGui.GetWindowContentRegionWidth() - ImGui.GetColumnOffset());
-                ImGui.BeginGroup();
+                DirectoryPath(ref state);
 
-                int i = 0;
-                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(1, 0));
-                foreach (var item in state.pathComponents)
-                {
-                    ImGui.SameLine();
-                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0, 0, 0, 0));
-                    ImGui.ArrowButton($"arrow {i}", ImGuiDir.Right);
-                    ImGui.PopStyleColor();
-                    ImGui.SameLine();
-                    if(ImGui.Button(item))
-                    {
-                        if (i < state.pathComponents.Count() - 1)
-                        {
-                            state.Path = Path.Join(state.pathComponents[0..(i+1)]);
-                        }
-                    }
-                    i++;
-                }
-                ImGui.PopStyleVar();
-                ImGui.EndGroup();
-                if (ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly) && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
-                {
-                    Console.WriteLine("Switch to text entry");
-                }
-                //if (ImGui.InputText("##path", ref state.editPath, 255, ImGuiInputTextFlags.EnterReturnsTrue))
-                //{
-                //    if (Path.EndsInDirectorySeparator(state.editPath) && Path.Exists(state.editPath))
-                //    {
-                //        state.Path = state.editPath;
-                //    }
-                //    else
-                //    {
-                //        state.editPath = state.Path;
-                //    }
-                //}
                 ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowContentRegionWidth(), ImGui.GetWindowHeight() - 85));
 
 
@@ -320,6 +262,65 @@ namespace Editor
             Storage[id] = state;
             return result;
         }
+
+        private static void DirectoryPath(ref FileDialogueState state)
+        {
+            ImGui.SetNextItemWidth(ImGui.GetColumnWidth());
+            if(state.textEdit)
+            {
+                bool returned = ImGui.InputText("##path", ref state.editPath, 255, ImGuiInputTextFlags.EnterReturnsTrue);
+                if (returned || (!ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left)))
+                {
+                    if (Path.EndsInDirectorySeparator(state.editPath) && Path.Exists(state.editPath))
+                    {
+                        state.Path = state.editPath;
+                    }
+                    else
+                    {
+                        state.editPath = state.Path;
+                    }
+                    state.textEdit = false;
+                }
+            }
+            else
+            {
+                ImGui.BeginGroup();
+
+                int i = 0;
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(1, 0));
+                foreach (var item in state.pathComponents)
+                {
+                    ImGui.SameLine();
+                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0, 0, 0, 0));
+                    ImGui.ArrowButton($"arrow {i}", ImGuiDir.Right);
+                    ImGui.PopStyleColor();
+                    ImGui.SameLine();
+                    if (ImGui.Button(item))
+                    {
+                        if (i < state.pathComponents.Count() - 1)
+                        {
+                            state.Path = Path.Join(state.pathComponents[0..(i + 1)]);
+                        }
+                    }
+                    i++;
+                }
+                ImGui.SameLine();
+                if (ImGui.InvisibleButton("switch_to_text", new Vector2(ImGui.GetColumnWidth(), ImGui.GetFrameHeight())))
+                {
+                    Console.WriteLine("Switch to text entry");
+                    state.textEdit = true;
+                }
+                //var debugCol = new Vector4(255, 0, 0, 255);
+                //unsafe
+                //{
+                //    ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), (uint)&debugCol);
+                //}
+                ImGui.PopStyleVar();
+                ImGui.EndGroup();
+            }
+
+        }
+
         static void ResetDirectories(ref FileDialogueState state, bool exludeFiles = false, string filter = "")
         {
             state.fileSystemEntries.Clear();
@@ -360,7 +361,10 @@ namespace Editor
                     texture.SetBits(bitmap);
                     Texture = texture;
                 }
-                catch { }
+                catch(Exception ex) 
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
     }
