@@ -6,7 +6,7 @@ namespace Editor.Drawers
     [DrawAtribute("bool")]
     public class BoolDrawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<bool> a)
             {

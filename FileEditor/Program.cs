@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Text;
 using BlurFileFormats.XtFlask;
+using BlurFileFormats.XtFlask.Types;
 using BlurFileFormats.XtFlask.Values;
 using Editor.Drawers;
 using Editor.Rendering;
@@ -50,15 +51,12 @@ namespace Editor
         }
         static void Main(string[] _args) {
             SynchronizationContext.SetSynchronizationContext(synchronizationContext = new SynchronizationContext());
-
             WindowCreationProps _winProps = new WindowCreationProps() {
                 Title = "BLUR FILE EDITOR",
-                IsResizable = false,
+                IsResizable = true,
             };
-            
             Window _window = new Window(_winProps);
             new ImGuiController();
-
             ImGui.CreateContext();
 
             _window.OnUpdate += () => {
@@ -67,7 +65,7 @@ namespace Editor
                 /******************************/
 
                 ImGui.SetNextWindowPos(Vector2.Zero, ImGuiCond.Always);
-                ImGui.SetNextWindowSize(Window.Instance.GetWindowSize());
+                ImGui.SetNextWindowSize(Window.Instance.WindowSize);
                 ImGui.BeginMainMenuBar();
                 if(ImGui.BeginMenu("File"))
                 {
@@ -100,6 +98,7 @@ namespace Editor
 
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.5f);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.5f);
+                ImGui.SetNextWindowSize(Window.Instance.WindowSize, ImGuiCond.Always);
                 ImGui.Begin("DOCK-SPACE TEST", ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoTitleBar |
                                                ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | 
                                                ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoNavFocus );
@@ -169,7 +168,7 @@ public class XtEditorWindow : IWindow
                     ImGui.Text(item.Type.Name);
                     if (showContent)
                     {
-                        ShowXtValue(value);
+                        ShowXtValue(xtDb, value);
                         ImGui.TreePop();
                     }
                 }
@@ -179,13 +178,13 @@ public class XtEditorWindow : IWindow
         }
     }
 
-    static void ShowXtValue(IXtValue xtValue)
+    static void ShowXtValue(XtDb xtDb, IXtValue xtValue)
     {
         if (xtValue is XtStructValue s)
         {
             foreach (var item in s.Values)
             {
-                DrawField(item);
+                DrawField(xtDb, item);
             }
         }
         else if (xtValue is XtArrayValue a)
@@ -193,17 +192,19 @@ public class XtEditorWindow : IWindow
             for (int i = 0; i < a.Values.Count; i++)
             {
                 var value = a.Values[i];
-                DrawArrayItem(i, value);
+                DrawArrayItem(xtDb, i, value);
             }
-            ImGui.SetNextItemWidth(200);
-            ImGui.Button("Add");
+            ImGui.Indent();
+            if(ImGui.Button("Add", new Vector2(180, 0)))
+            {
+                a.Values.Add(new XtArrayValueItem(a.Type.ElementType.CreateDefault()));
+            }
         }
     }
-
-    private static void DrawArrayItem(int i, XtArrayValueItem value)
+    private static bool DrawArrayItem(XtDb xtDb, int i, XtArrayValueItem value)
     {
         ImGuiTreeNodeFlags flags = default;
-        bool hasContent = TypeDrawer.HasContent(value.Value) || value.Value is IXtMultiValue;
+        bool hasContent = TypeDrawer.HasContent(value.Value);
         if (!hasContent)
         {
             flags = ImGuiTreeNodeFlags.Leaf;
@@ -213,34 +214,35 @@ public class XtEditorWindow : IWindow
         ImGui.SameLine();
         ImGui.Text(value.Type.Name);
 
-        if (!TypeDrawer.DrawTitle(value.Value))
-        {
-            if (value.Value is XtEnumValue v)
-            {
-                int c = (int)v.Value;
-                ImGui.SameLine();
-                ImGui.Combo("##enum", ref c, v.XtType.Labels.ToArray(), v.XtType.Labels.Count);
-                v.Value = (uint)c;
-            }
-        }
+        DrawTitleContent(xtDb, value.Value);
         if (showContent)
         {
-            if (!TypeDrawer.DrawContent(value.Value))
-            {
-                if (value.Value is IXtMultiValue)
-                {
-                    ShowXtValue(value.Value);
-                }
-            }
+            DrawContent(xtDb, value.Value);
             ImGui.TreePop();
         }
+        return showContent;
     }
+    public static bool DrawField(XtDb xtDb, XtStructValueItem item)
+    {
+        var field = item.Field;
+        var fieldValue = item.Value;
+
+        bool showContent = DrawFieldLabel(item);
+        DrawTitleContent(xtDb, fieldValue);
+        if (showContent)
+        {
+            DrawContent(xtDb, fieldValue);
+            ImGui.TreePop();
+        }
+        return showContent;
+    }
+
     public static bool DrawFieldLabel(XtStructValueItem item, ImGuiTreeNodeFlags? overrideFlags = null)
     {
         var field = item.Field;
         var fieldValue = item.Value;
 
-        bool hasContent = TypeDrawer.HasContent(fieldValue) || fieldValue is IXtMultiValue;
+        bool hasContent = TypeDrawer.HasContent(fieldValue);
 
         ImGuiTreeNodeFlags flags = default;
         if (overrideFlags is ImGuiTreeNodeFlags f)
@@ -261,45 +263,48 @@ public class XtEditorWindow : IWindow
 
         return showContent;
     }
-    public static bool DrawField(XtStructValueItem item)
-    {
-        var field = item.Field;
-        var fieldValue = item.Value;
 
-        bool showContent = DrawFieldLabel(item);
-        DrawTitleContent(fieldValue);
-        if (showContent)
+    private static void DrawTitleContent(XtDb xtDb, IXtValue value)
+    {
+        if(value is IXtReferenceValue refVal)
         {
-            if (!TypeDrawer.DrawContent(fieldValue))
-            {
-                if (fieldValue is IXtMultiValue)
-                {
-                    ShowXtValue(fieldValue);
-                }
-            }
-            ImGui.TreePop();
+            value = refVal.Reference;
         }
-        return showContent;
-    }
-
-    private static void DrawTitleContent(IXtValue fieldValue)
-    {
-        if (!TypeDrawer.DrawTitle(fieldValue))
+        if (!TypeDrawer.DrawTitle(xtDb, value))
         {
-            if (fieldValue is XtEnumValue v)
+            if (value is XtEnumValue v)
             {
                 int c = (int)v.Value;
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(160);
                 ImGui.Combo("##enum", ref c, v.XtType.Labels.ToArray(), v.XtType.Labels.Count);
                 v.Value = (uint)c;
-            } else if(fieldValue is XtFlagsValue f)
+            } else if(value is XtFlagsValue f)
             {
                 uint c = f.Value;
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(160);
                 MultiCombo("##flags", ref c, f.XtType.Labels);
                 f.Value = c;
+            } else if(value is XtNullValue)
+            {
+                ImGui.SameLine();
+                ImGui.Text("null");
+            }
+        }
+    }
+    public static void DrawContent(XtDb xtDb, IXtValue value)
+    {
+        if (value is IXtReferenceValue refVal)
+        {
+            DrawContent(xtDb, refVal.Reference);
+            return;
+        }
+        if (!TypeDrawer.DrawContent(xtDb, value))
+        {
+            if (value is IXtMultiValue)
+            {
+                ShowXtValue(xtDb, value);
             }
         }
     }

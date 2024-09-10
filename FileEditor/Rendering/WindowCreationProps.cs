@@ -20,7 +20,6 @@ namespace Editor.Rendering {
         /// The default height of the window.
         /// </summary>
         public int Height { get; set; }
-        
         /// <summary>
         /// Enable V-Sync?
         /// </summary>
@@ -44,7 +43,7 @@ namespace Editor.Rendering {
             Height = 720;
 
             SwapInterval = true;
-            IsResizable = false;
+            IsResizable = true;
             IsMaximized = false;
         }
         

@@ -6,7 +6,7 @@ namespace Editor.Drawers
     [DrawAtribute("Rgba")]
     public class RgbaDrawer : ITypeTitleDrawer, ITypeContentDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtStructValue s)
             {
@@ -28,7 +28,7 @@ namespace Editor.Drawers
             }
         }
 
-        public void DrawContent(IXtValue xtValue)
+        public void DrawContent(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtStructValue s)
             {

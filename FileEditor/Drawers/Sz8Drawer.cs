@@ -6,7 +6,7 @@ namespace Editor.Drawers
     [DrawAtribute("sz8")]
     public class Sz8Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<string> a)
             {

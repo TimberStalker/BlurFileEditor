@@ -91,13 +91,17 @@ namespace Editor.Rendering {
         /// Returns a <see cref="Vector2"/> containing the width and height of the current window.<br/>
         /// X being the width, and Y the height.
         /// </summary>
-        public Vector2 GetWindowSize() {
-            GLFW.glfwGetWindowSize(GLFWWindow, out int _width, out int _height);
-            return new Vector2(_width, _height);
+        public Vector2 WindowSize
+        {
+            get
+            {
+                GLFW.glfwGetWindowSize(GLFWWindow, out int _width, out int _height);
+                return new Vector2(_width, _height);
+            }
         }
-        
+
         #endregion
-        
+
         #region Window's Internal Methods
 
         /// <summary>

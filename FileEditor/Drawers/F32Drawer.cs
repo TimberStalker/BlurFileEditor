@@ -6,7 +6,7 @@ namespace Editor.Drawers
     [DrawAtribute("f32")]
     public class F32Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<float> a)
             {
@@ -26,7 +26,7 @@ namespace Editor.Drawers
     [DrawAtribute("f64")]
     public class F64Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<double> a)
             {

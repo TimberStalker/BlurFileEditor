@@ -6,7 +6,7 @@ namespace Editor.Drawers
     [DrawAtribute("i64")]
     public class I64Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<long> a)
             {
@@ -26,7 +26,7 @@ namespace Editor.Drawers
     [DrawAtribute("i32")]
     public class I32Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<int> a)
             {
@@ -47,7 +47,7 @@ namespace Editor.Drawers
     [DrawAtribute("i16")]
     public class I16Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<short> a)
             {
@@ -68,7 +68,7 @@ namespace Editor.Drawers
     [DrawAtribute("i8")]
     public class I8Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<sbyte> a)
             {
@@ -90,7 +90,7 @@ namespace Editor.Drawers
     [DrawAtribute("u64")]
     public class U64Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<ulong> a)
             {
@@ -110,7 +110,7 @@ namespace Editor.Drawers
     [DrawAtribute("u32")]
     public class U32Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<uint> a)
             {
@@ -131,7 +131,7 @@ namespace Editor.Drawers
     [DrawAtribute("u16")]
     public class U16Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<ushort> a)
             {
@@ -152,7 +152,7 @@ namespace Editor.Drawers
     [DrawAtribute("u8")]
     public class U8Drawer : ITypeTitleDrawer
     {
-        public void Draw(IXtValue xtValue)
+        public void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
         {
             if (xtValue is XtAtomValue<byte> a)
             {
@@ -165,6 +165,24 @@ namespace Editor.Drawers
                 {
                     ImGui.InputScalar("##byte", ImGuiDataType.U8, (nint)(&v));
                 }
+
+                a.Value = v;
+            }
+        }
+    }
+    [DrawAtribute("LocId")]
+    public class LocIdDrawer : ITypeTitleDrawer
+    {
+        public unsafe void Draw(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue)
+        {
+            if (xtValue is XtAtomValue<uint> a)
+            {
+                uint v = a.Value;
+
+
+                ImGui.SameLine(0, 20);
+                ImGui.SetNextItemWidth(120);
+                ImGui.InputScalar("##uint", ImGuiDataType.U32, (nint)(&v));
 
                 a.Value = v;
             }

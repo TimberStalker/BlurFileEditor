@@ -4,6 +4,6 @@ namespace Editor.Drawers
 {
     public interface ITypeContentDrawer : ITypeDrawer
     {
-        public void DrawContent(IXtValue xtValue);
+        public void DrawContent(BlurFileFormats.XtFlask.XtDb xtDb, IXtValue xtValue);
     }
 }
