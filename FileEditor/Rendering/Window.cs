@@ -123,7 +123,6 @@ namespace Editor.Rendering {
                 CreationProps.Height,
                 CreationProps.Title,
                 IntPtr.Zero, IntPtr.Zero);
-
             if (GLFWWindow == IntPtr.Zero) throw new Exception($"Failed to initialize '{nameof(Window)}'!");
             
             //TODO: Setup here the GLFW's callbacks (Mouse, Keyboard, Resize, ...)

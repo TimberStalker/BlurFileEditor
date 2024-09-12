@@ -3,22 +3,31 @@ using SkiaSharp;
 using Gdk;
 using System.Runtime.Versioning;
 using System.Drawing;
+using Windows.Win32;
+using Windows.Win32.Storage.FileSystem;
+using Windows.Win32.UI.Shell;
 
 public sealed class FileIcon
 {
-    [SupportedOSPlatform("windows")]
-    static SKBitmap GetIconBitmapWindows(string filePath)
+    [SupportedOSPlatform("windows5.1.2600")]
+    unsafe static SKBitmap GetIconBitmapWindows(string filePath)
     {
-        var icon = Icon.ExtractAssociatedIcon(filePath)!;
+        SHFILEINFOW fileInfo = new();
+        PInvoke.SHGetFileInfo(filePath, FILE_FLAGS_AND_ATTRIBUTES.FILE_ATTRIBUTE_READONLY, &fileInfo, (uint)Marshal.SizeOf(fileInfo), SHGFI_FLAGS.SHGFI_ICON | SHGFI_FLAGS.SHGFI_SMALLICON);
+
+        var icon = Icon.FromHandle(fileInfo.hIcon);
+
         if (icon == null)
         {
             throw new Exception("Icon not found.");
         }
+
         using Bitmap bitmap = icon.ToBitmap();
         using MemoryStream ms = new MemoryStream();
         bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
         byte[] imageData = ms.ToArray();
 
+        PInvoke.DestroyIcon(fileInfo.hIcon);
         return SKBitmap.Decode(imageData);
     }
     [SupportedOSPlatform("linux")]
