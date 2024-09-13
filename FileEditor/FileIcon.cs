@@ -3,6 +3,7 @@ using SkiaSharp;
 using Gdk;
 using System.Runtime.Versioning;
 using System.Drawing;
+
 using Windows.Win32;
 using Windows.Win32.Storage.FileSystem;
 using Windows.Win32.UI.Shell;
@@ -33,15 +34,19 @@ public sealed class FileIcon
     [SupportedOSPlatform("linux")]
     static SKBitmap GetIconBitmapLinux(string filePath)
     {
-        GLib.FileIcon icon = new GLib.FileIcon(GLib.FileFactory.NewForPath(filePath));
+        GLib.IFile file = GLib.FileFactory.NewForPath(filePath);
+        //var fileInfo = file.QueryInfo("standard::icon", 0, new GLib.Cancellable());
+        using GLib.FileIcon icon = new GLib.FileIcon(file);
+
+        string type = "";
+        using var iconStram = icon.Load(64, type, new GLib.Cancellable());
+        using Pixbuf pixbuf = new Pixbuf(iconStram, new GLib.Cancellable());
         
-        //Pixbuf pixbuf = new Pixbuf(icon.File.Path);
-        //
-        //if (pixbuf == null)
-        //{
-        //    throw new Exception("Failed to load icon.");
-        //}
-        //byte[] imageData = pixbuf.SaveToBuffer("png");
+        if (pixbuf == null)
+        {
+            throw new Exception("Failed to load icon.");
+        }
+        byte[] imageData = pixbuf.SaveToBuffer("png");
 
         return SKBitmap.Decode(icon.File.Path);
     }
