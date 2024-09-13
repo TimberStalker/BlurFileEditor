@@ -39,8 +39,8 @@ public sealed class FileIcon
         using GLib.FileIcon icon = new GLib.FileIcon(file);
 
         string type = "";
-        using var iconStram = icon.Load(64, type, new GLib.Cancellable());
-        using Pixbuf pixbuf = new Pixbuf(iconStram, new GLib.Cancellable());
+        using var iconStream = icon.Load(64, type, new GLib.Cancellable());
+        using Pixbuf pixbuf = new Pixbuf(iconStream, new GLib.Cancellable());
         
         if (pixbuf == null)
         {
