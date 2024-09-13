@@ -27,6 +27,12 @@ namespace Editor
         static List<XtEditorWindow> windows = [];
 
         public static void ExecuteOnMainThread(Action action) => ExecuteOnMainThread(_ => action(), null);
+        public static void ExecuteOnMainThread<T1, T2>(Action<T1, T2> action, T1 state1, T2 state2)
+            => ExecuteOnMainThread(c => action(c.state1, c.state2), (state1, state2));
+        
+        public static void ExecuteOnMainThread<T1, T2, T3>(Action<T1, T2, T3> action, T1 state1, T2 state2, T3 state3)
+            => ExecuteOnMainThread(c => action(c.state1, c.state2, c.state3), (state1, state2, state3));
+
         public static void ExecuteOnMainThread<T>(Action<T> action, T state)
         {
             if(SynchronizationContext.Current != synchronizationContext)
@@ -86,7 +92,7 @@ namespace Editor
                 if (FileDialogue.OpenFile("standaloneOpen", out string file))
                 {
                     Console.WriteLine(file);
-                    if(Path.GetExtension(file) == ".bin")
+                    if(Path.GetExtension(file) == ".bin" || Path.GetExtension(file) == ".xt")
                     {
                         windows.Add(new XtEditorWindow(file));
                     }
@@ -98,6 +104,7 @@ namespace Editor
 
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.5f);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.5f);
+                ImGui.SetNextWindowPos(Vector2.Zero, ImGuiCond.Always);
                 ImGui.SetNextWindowSize(Window.Instance.WindowSize, ImGuiCond.Always);
                 ImGui.Begin("DOCK-SPACE TEST", ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoTitleBar |
                                                ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | 
@@ -133,20 +140,22 @@ public class FileTreeWindow : IWindow
 public class XtEditorWindow : IWindow
 {
     XtDb XtDb { get; }
+    string File { get; }
     string Name { get; }
     public XtEditorWindow(string path)
     {
         XtDb = Flask.Import(path);
+        File = path;
         Name = Path.GetFileName(path);
         
     }
     public void Draw()
     {
-        DrawXtEditorWindow(XtDb, Name);
+        DrawXtEditorWindow(XtDb, File, Name);
     }
-    static void DrawXtEditorWindow(XtDb xtDb, string name)
+    static void DrawXtEditorWindow(XtDb xtDb, string file, string name)
     {
-        if (ImGui.Begin(name, ImGuiWindowFlags.NoCollapse))
+        if (ImGui.Begin($"{name}##{file}", ImGuiWindowFlags.NoCollapse))
         {
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
             foreach (var item in xtDb.References)
@@ -199,6 +208,7 @@ public class XtEditorWindow : IWindow
             {
                 a.Values.Add(new XtArrayValueItem(a.Type.ElementType.CreateDefault()));
             }
+            ImGui.Unindent();
         }
     }
     private static bool DrawArrayItem(XtDb xtDb, int i, XtArrayValueItem value)

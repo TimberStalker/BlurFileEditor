@@ -9,7 +9,7 @@ using Windows.Win32.UI.Shell;
 
 public sealed class FileIcon
 {
-    [SupportedOSPlatform("windows5.1.2600")]
+    [SupportedOSPlatform("windows")]
     unsafe static SKBitmap GetIconBitmapWindows(string filePath)
     {
         SHFILEINFOW fileInfo = new();
@@ -33,23 +33,19 @@ public sealed class FileIcon
     [SupportedOSPlatform("linux")]
     static SKBitmap GetIconBitmapLinux(string filePath)
     {
-        // Get the file icon using Gdk
         GLib.FileIcon icon = new GLib.FileIcon(GLib.FileFactory.NewForPath(filePath));
+        
+        //Pixbuf pixbuf = new Pixbuf(icon.File.Path);
+        //
+        //if (pixbuf == null)
+        //{
+        //    throw new Exception("Failed to load icon.");
+        //}
+        //byte[] imageData = pixbuf.SaveToBuffer("png");
 
-        // Load the icon as a Pixbuf
-        Pixbuf pixbuf = new Pixbuf(icon.File.Path);
-
-        if (pixbuf == null)
-        {
-            throw new Exception("Failed to load icon.");
-        }
-
-        // Convert Pixbuf to byte array
-        byte[] imageData = pixbuf.SaveToBuffer("png");
-
-        // Create an SKBitmap from the byte array
-        return SKBitmap.Decode(imageData);
+        return SKBitmap.Decode(icon.File.Path);
     }
+
     public static SKBitmap GetIcon(string filePath)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
