@@ -5,11 +5,27 @@ using Editor;
 using Editor.Rendering;
 using SkiaSharp;
 
-public sealed class Texture2D : IDisposable
+public unsafe sealed class Texture2D : IDisposable
 {
     uint handle;
     bool setPixels;
 
+    public int Width
+    {
+        get
+        {
+            GL.glGetTextureLevelParameteriv(handle, 0, GL.GL_TEXTURE_WIDTH, out var width);
+            return width;
+        }
+    }
+    public int Height
+    {
+        get
+        {
+            GL.glGetTextureLevelParameteriv(handle, 0, GL.GL_TEXTURE_HEIGHT, out var height);
+            return height;
+        }
+    }
 
     public Texture2D()
     {
@@ -64,6 +80,30 @@ public sealed class Texture2D : IDisposable
         }
     }
 
+    public static Texture2D CreateFromFile(string file)
+    {
+        using SKBitmap bitmap = SKBitmap.Decode(file);
+        return CreateFromBitmap(bitmap);
+    }
+
+    public static Texture2D CreateFromBytes(byte[] bytes)
+    {
+        using SKBitmap bitmap = SKBitmap.Decode(bytes);
+        return CreateFromBitmap(bitmap);
+    }
+
+    public static Texture2D CreateFromBitmap(SKBitmap bitmap)
+    {
+        var texture = new Texture2D();
+
+        texture.SetParameter(GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
+        texture.SetParameter(GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+        texture.SetParameter(GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+        texture.SetParameter(GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+
+        texture.SetBits(bitmap);
+        return texture;
+    }
 
     public static implicit operator uint(Texture2D texture)
     {

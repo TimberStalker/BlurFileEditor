@@ -43,6 +43,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="DirectXTexNet" Version="1.0.7" />
       <PackageReference Include="GdkSharp" Version="3.24.24.95" />
       <PackageReference Include="GioSharp" Version="3.24.24.95" />
       <PackageReference Include="ImGui.NET" Version="1.78.0" />

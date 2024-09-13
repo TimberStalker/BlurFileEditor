@@ -7,15 +7,21 @@ using System.Drawing;
 using Windows.Win32;
 using Windows.Win32.Storage.FileSystem;
 using Windows.Win32.UI.Shell;
+using GLib;
+using Editor.Rendering;
 
 public sealed class FileIcon
 {
+    static Dictionary<int, Texture2D> _icons = [];
     [SupportedOSPlatform("windows")]
-    unsafe static SKBitmap GetIconBitmapWindows(string filePath)
+    unsafe static Texture2D GetIconBitmapWindows(string filePath)
     {
         SHFILEINFOW fileInfo = new();
         PInvoke.SHGetFileInfo(filePath, FILE_FLAGS_AND_ATTRIBUTES.FILE_ATTRIBUTE_READONLY, &fileInfo, (uint)Marshal.SizeOf(fileInfo), SHGFI_FLAGS.SHGFI_ICON | SHGFI_FLAGS.SHGFI_SMALLICON);
-
+        if(_icons.TryGetValue(fileInfo.iIcon, out var texture))
+        {
+            return texture;
+        }
         var icon = Icon.FromHandle(fileInfo.hIcon);
 
         if (icon == null)
@@ -29,18 +35,24 @@ public sealed class FileIcon
         byte[] imageData = ms.ToArray();
 
         PInvoke.DestroyIcon(fileInfo.hIcon);
-        return SKBitmap.Decode(imageData);
+        return Texture2D.CreateFromBitmap(SKBitmap.Decode(imageData));
     }
     [SupportedOSPlatform("linux")]
-    static SKBitmap GetIconBitmapLinux(string filePath)
+    static Texture2D GetIconBitmapLinux(string filePath)
     {
-        GLib.IFile file = GLib.FileFactory.NewForPath(filePath);
-        //var fileInfo = file.QueryInfo("standard::icon", 0, new GLib.Cancellable());
-        using GLib.FileIcon icon = new GLib.FileIcon(file);
+        Cancellable cancellable = new Cancellable();
+
+        IFile file = FileFactory.NewForPath(filePath);
+        var fileInfo = file.QueryInfo("standard::icon", 0, cancellable);
+        if(fileInfo.Icon is not ILoadableIcon icon)
+        {
+            throw new Exception("Failed to find icon.");
+        }
+        //using GLib.FileIcon icon = new GLib.FileIcon(file);
 
         string type = "";
-        using var iconStream = icon.Load(64, type, new GLib.Cancellable());
-        using Pixbuf pixbuf = new Pixbuf(iconStream, new GLib.Cancellable());
+        using var iconStream = icon.Load(64, type, cancellable);
+        using Pixbuf pixbuf = new Pixbuf(iconStream, cancellable);
         
         if (pixbuf == null)
         {
@@ -48,10 +60,10 @@ public sealed class FileIcon
         }
         byte[] imageData = pixbuf.SaveToBuffer("png");
 
-        return SKBitmap.Decode(icon.File.Path);
+        return Texture2D.CreateFromBitmap(SKBitmap.Decode(imageData));
     }
 
-    public static SKBitmap GetIcon(string filePath)
+    public static Texture2D GetIcon(string filePath)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return GetIconBitmapWindows(filePath);

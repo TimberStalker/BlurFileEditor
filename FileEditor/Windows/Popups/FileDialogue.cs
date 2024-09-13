@@ -4,7 +4,7 @@ using System.Text;
 using Editor.Rendering;
 using ImGuiNET;
 
-namespace Editor
+namespace Editor.Windows.Popups
 {
     public static class FileDialogue
     {
@@ -22,10 +22,11 @@ namespace Editor
             public bool textEdit;
             public string Path
             {
-                get => pathHistoryIndex == 0 ? path : pathHistory[^(pathHistoryIndex)];
-                set {
+                get => pathHistoryIndex == 0 ? path : pathHistory[^pathHistoryIndex];
+                set
+                {
                     if (value == path) return;
-                    while(pathHistoryIndex != 0)
+                    while (pathHistoryIndex != 0)
                     {
                         pathHistory.RemoveAt(pathHistory.Count - 1);
                         pathHistoryIndex--;
@@ -62,7 +63,7 @@ namespace Editor
             {
                 state = new FileDialogueState();
             }
-            if(state.open)
+            if (state.open)
             {
                 ImGui.OpenPopup(id);
                 state.open = false;
@@ -112,7 +113,7 @@ namespace Editor
                     {
                         state.selectedFile = info.Name;
                     }
-                    if(ImGui.IsItemHovered())
+                    if (ImGui.IsItemHovered())
                     {
                         if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                         {
@@ -161,7 +162,7 @@ namespace Editor
             Storage[id] = state;
             return result;
         }
-        public static bool OpenFile(string id, out string file)
+        public static bool OpenFile(string id, out string file, string filter = "")
         {
             file = "";
             bool result = false;
@@ -169,7 +170,7 @@ namespace Editor
             {
                 state = new FileDialogueState();
             }
-            if(state.open)
+            if (state.open)
             {
                 ImGui.OpenPopup(id);
                 state.open = false;
@@ -179,7 +180,7 @@ namespace Editor
             {
                 if (state.directoriesDirty)
                 {
-                    ResetDirectories(ref state);
+                    ResetDirectories(ref state, filter: filter);
                     state.directoriesDirty = false;
                 }
                 if (ImGui.ArrowButton("back", ImGuiDir.Left))
@@ -269,10 +270,10 @@ namespace Editor
         private static void DirectoryPath(ref FileDialogueState state)
         {
             ImGui.SetNextItemWidth(ImGui.GetColumnWidth());
-            if(state.textEdit)
+            if (state.textEdit)
             {
                 bool returned = ImGui.InputText("##path", ref state.editPath, 255, ImGuiInputTextFlags.EnterReturnsTrue);
-                if (returned || (!ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left)))
+                if (returned || !ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                 {
                     if (Path.EndsInDirectorySeparator(state.editPath) && Path.Exists(state.editPath))
                     {
@@ -333,9 +334,9 @@ namespace Editor
 
                 state.fileSystemEntries.Add(new FileData(directoryInfo));
             }
-            if(!exludeFiles)
+            if (!exludeFiles)
             {
-                foreach(var file in Directory.GetFiles(state.Path, filter))
+                foreach (var file in Directory.GetFiles(state.Path, filter))
                 {
                     FileInfo fileInfo = new FileInfo(file);
                     state.fileSystemEntries.Add(new FileData(fileInfo));
@@ -348,22 +349,12 @@ namespace Editor
             public Texture2D? Texture { get; }
             public FileData(FileSystemInfo systemInfo)
             {
-                SystemInfo = systemInfo; 
+                SystemInfo = systemInfo;
                 try
                 {
-                    var bitmap = FileIcon.GetIcon(SystemInfo.FullName);
-
-                    var texture = new Texture2D();
-
-                    texture.SetParameter(GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-                    texture.SetParameter(GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-                    texture.SetParameter(GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-                    texture.SetParameter(GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-                    
-                    texture.SetBits(bitmap);
-                    Texture = texture;
+                    Texture = FileIcon.GetIcon(SystemInfo.FullName);
                 }
-                catch(Exception ex) 
+                catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                 }
