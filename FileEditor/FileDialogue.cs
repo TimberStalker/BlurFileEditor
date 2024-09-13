@@ -204,8 +204,10 @@ namespace Editor
                 ImGui.Text("Size");
                 ImGui.NextColumn();
 
+                ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
                 foreach (var item in state.fileSystemEntries)
                 {
+                    ImGui.Spacing();
                     var info = item.SystemInfo;
                     if (item.Texture is not null)
                     {
@@ -215,7 +217,7 @@ namespace Editor
                     else
                     {
                     }
-                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap))
+                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 20)))
                     {
                         state.selectedFile = info.Name;
                     }
@@ -243,6 +245,7 @@ namespace Editor
                     ImGui.Text("Size");
                     ImGui.NextColumn();
                 }
+                ImGui.PopStyleVar();
                 ImGui.Columns(1);
 
                 ImGui.PopStyleVar();
@@ -295,7 +298,7 @@ namespace Editor
                     ImGui.ArrowButton($"arrow {i}", ImGuiDir.Right);
                     ImGui.PopStyleColor();
                     ImGui.SameLine();
-                    if (ImGui.Button(item))
+                    if (ImGui.Button($"{item}##{i}"))
                     {
                         if (i < state.pathComponents.Count() - 1)
                         {

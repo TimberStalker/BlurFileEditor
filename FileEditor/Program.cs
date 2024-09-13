@@ -116,10 +116,15 @@ namespace Editor
 
                 //ImGui.ShowAboutWindow();
                 //ImGui.ShowDemoWindow();
+                Action? removeWindows = null;
                 foreach (var window in windows)
                 {
-                    window.Draw();
+                    if(!window.Draw())
+                    {
+                        removeWindows += () => windows.Remove(window);
+                    }
                 }
+                removeWindows?.Invoke();
             };
             
             _window.Loop();
@@ -129,12 +134,13 @@ namespace Editor
 }
 public interface IWindow
 {
-    void Draw();
+    bool Draw();
 }
 public class FileTreeWindow : IWindow
 {
-    public void Draw()
+    public bool Draw()
     {
+        return true;
     }
 }
 public class XtEditorWindow : IWindow
@@ -149,13 +155,14 @@ public class XtEditorWindow : IWindow
         Name = Path.GetFileName(path);
         
     }
-    public void Draw()
+    public bool Draw()
     {
-        DrawXtEditorWindow(XtDb, File, Name);
+        return DrawXtEditorWindow(XtDb, File, Name);
     }
-    static void DrawXtEditorWindow(XtDb xtDb, string file, string name)
+    static bool DrawXtEditorWindow(XtDb xtDb, string file, string name)
     {
-        if (ImGui.Begin($"{name}##{file}", ImGuiWindowFlags.NoCollapse))
+        bool open = true;
+        if (ImGui.Begin($"{name}##{file}", ref open, ImGuiWindowFlags.NoCollapse))
         {
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
             foreach (var item in xtDb.References)
@@ -185,6 +192,7 @@ public class XtEditorWindow : IWindow
             ImGui.PopStyleVar();
             ImGui.End();
         }
+        return open;
     }
 
     static void ShowXtValue(XtDb xtDb, IXtValue xtValue)
