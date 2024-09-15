@@ -73,7 +73,7 @@ public class DirectXImageWindow : IWindow
         if (ImGui.Begin($"{Path.GetFileName(TexturePath)}##{TexturePath}", ref open, ImGuiWindowFlags.NoCollapse))
         {
             var size = ImGui.GetWindowSize();
-            ImGui.BeginChildFrame(2, size - new System.Numerics.Vector2(20, 40));
+            ImGui.BeginChildFrame(2, size - new Vector2(20, 40), ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
             Display.Draw();
             ImGui.End();
         }
@@ -86,7 +86,7 @@ public class DirectXImageWindow : IWindow
     class SingleImage : TextureDisplay
     {
         Texture2D texture;
-        float scale = 1;
+        float scale = 0;
 
         public SingleImage(ScratchImage sImage, TexMetadata metadata)
         {
@@ -99,7 +99,14 @@ public class DirectXImageWindow : IWindow
 
         public void Draw()
         {
-            scale += (ImGui.GetIO().MouseWheel * scale / 4) ;
+            scale += ImGui.GetIO().MouseWheel / 4;
+
+            if(ImGui.IsMouseDown(ImGuiMouseButton.Left))
+            {
+                var delta = ImGui.GetIO().MouseDelta;
+                ImGui.SetScrollX(ImGui.GetScrollX() - delta.X);
+                ImGui.SetScrollY(ImGui.GetScrollY() - delta.Y);
+            }
 
             var drawList = ImGui.GetWindowDrawList();
 
@@ -122,7 +129,7 @@ public class DirectXImageWindow : IWindow
                 width = (int)(width * scale);
             }
 
-            ImGui.Image(texture, new System.Numerics.Vector2(width, height) * scale);
+            ImGui.Image(texture, new Vector2(width, height) * MathF.Exp(scale));
         }
     }
     class CubemapImage : TextureDisplay
