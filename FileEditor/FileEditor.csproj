@@ -68,4 +68,13 @@
     <ItemGroup>
       <ProjectReference Include="..\..\BlurFileFormats\BlurFileFormats.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Shaders\skybox.frag">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Shaders\skybox.vert">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
 </Project>

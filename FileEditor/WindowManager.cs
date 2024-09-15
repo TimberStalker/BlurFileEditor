@@ -35,6 +35,10 @@ public class WindowManager
         if (removeWindow is not null)
         {
             windows.Remove(removeWindow);
+            if(removeWindow is IDisposable d)
+            {
+                d.Dispose();
+            }
         }
     }
 }

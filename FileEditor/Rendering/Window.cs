@@ -16,6 +16,10 @@ namespace Editor.Rendering {
         /// <summary>
         /// Invoked before <see cref="onUpdate"/>.
         /// </summary>
+        private Action? onDraw = null;
+        /// <summary>
+        /// Invoked before <see cref="onUpdate"/>.
+        /// </summary>
         private Action? onPreUpdate = null;
         /// <summary>
         /// Invoked when it's time to update.
@@ -46,6 +50,8 @@ namespace Editor.Rendering {
         public IntPtr GLFWWindow { get; private set; } = default;
         
         /// <inheritdoc cref="onPreUpdate"/>
+        public event Action OnDraw { add { onDraw += value; } remove { onDraw -= value; } }
+
         public event Action OnPreUpdate { add { onPreUpdate += value; } remove { onPreUpdate -= value; } }
         /// <inheritdoc cref="onUpdate"/>
         public event Action OnUpdate { add { onUpdate += value; } remove { onUpdate -= value; } }
@@ -73,6 +79,8 @@ namespace Editor.Rendering {
         /// </summary>
         public void Loop() {
             while (GLFW.glfwWindowShouldClose(GLFWWindow) == GL_FALSE) {
+                onDraw?.Invoke();
+
                 GLFW.glfwPollEvents();
                 onPreUpdate?.Invoke();
                 
