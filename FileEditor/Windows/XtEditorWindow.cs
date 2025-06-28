@@ -113,7 +113,7 @@ public class XtEditorWindow : GuiWindow
             value is XtPointerValue p && p.Value is XtStructValue ||
             value is XtHandleValue h && h.Handle is uint r && xtDb.Refs.TryGetValue(r, out var v) && v.Value is XtStructValue ||
             value is XtArrayValue a && a.Array is not null;
-    public static bool DrawHeader(XtDatabase xtDb, IXtValueItem item, XtRef reference)
+    public static bool DrawHeader(XtDatabase xtDb, IXtValueItem item, XtRef reference, bool enabled)
     {
         string text = item switch
         {
@@ -124,16 +124,24 @@ public class XtEditorWindow : GuiWindow
         };
         if(HasContent(xtDb, item.Value))
         {
-            return ImGui.TreeNodeEx(text, ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
+            if(!enabled) ImGui.EndDisabled();
+            var header = ImGui.TreeNodeEx(text, ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
+
+            if (!enabled) ImGui.BeginDisabled();
+            return header;
         }
         else
         {
-            return ImGui.TreeNodeEx(text, ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
+            if (!enabled) ImGui.EndDisabled();
+            var header = ImGui.TreeNodeEx(text, ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
+
+            if (!enabled) ImGui.BeginDisabled();
+            return header;
         }
     }
     public static void DrawXtItem(XtDatabase xtDb, IXtValueItem item, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
     {
-        bool showContent = DrawHeader(xtDb, item, reference);
+        bool showContent = DrawHeader(xtDb, item, reference, enabled);
 
         if(item is XtArrayItem v)
         {
@@ -165,7 +173,7 @@ public class XtEditorWindow : GuiWindow
                 if (handle.Handle is uint h)
                 {
                     ImGui.BeginDisabled();
-                    DrawItemValueContent(xtDb, handle, xtDb.Refs[h], commandBuffer, showContent, enabled);
+                    DrawItemValueContent(xtDb, handle, xtDb.Refs[h], commandBuffer, showContent, false);
                     ImGui.EndDisabled();
                 }
                 else
@@ -261,10 +269,6 @@ public class XtEditorWindow : GuiWindow
     public static unsafe void DrawValue(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
     {
         ImGui.SameLine(0, 10);
-        if(TypeDrawer.Draw(xtDb, value, reference, commandBuffer))
-        {
-            return;
-        }
         switch (value)
         {
             case XtAtomValue<bool> v:
@@ -434,8 +438,11 @@ public class XtEditorWindow : GuiWindow
                 break;
             case XtStructValue v:
 
-                ImGui.SetNextItemWidth(80);
-                ImGui.Text($"({v.Type.Name}){v.GetHashCode()}");
+                if (!TypeDrawer.Draw(xtDb, value, reference, commandBuffer))
+                {
+                    ImGui.SetNextItemWidth(80);
+                    ImGui.Text($"({v.Type.Name}){v.GetHashCode()}");
+                }
                 break;
             case XtPointerValue v:
 

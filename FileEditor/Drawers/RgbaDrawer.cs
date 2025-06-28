@@ -4,9 +4,9 @@ using ImGuiNET;
 namespace Editor.Drawers
 {
     [DrawAtribute("Rgba")]
-    public class RgbaDrawer
+    public class RgbaDrawer : IValueDrawer<XtStructValue>
     {
-        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer)
+        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var rValue = value.GetField<float>("r");
             var gValue = value.GetField<float>("g");
@@ -28,12 +28,13 @@ namespace Editor.Drawers
                     t => (t.target.rValue.Value, t.target.gValue.Value, t.target.bValue.Value, t.target.aValue.Value) = t.newValues,
                     t => (t.target.rValue.Value, t.target.gValue.Value, t.target.bValue.Value, t.target.aValue.Value) = t.oldValues);
             }
+            return true;
         }
     }
     [DrawAtribute("Route")]
-    public class RouteDrawer
+    public class RouteDrawer : IValueDrawer<XtStructValue>
     {
-        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer)
+        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var name = value.GetField<string>("Name");
 
@@ -42,9 +43,9 @@ namespace Editor.Drawers
         }
     }
     [DrawAtribute("City")]
-    public class CityDrawer
+    public class CityDrawer : IValueDrawer<XtStructValue>
     {
-        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer)
+        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var name = value.GetField<string>("Name");
 

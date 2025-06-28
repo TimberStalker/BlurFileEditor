@@ -2,77 +2,86 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Metadata;
-#if DEBUG
-[assembly: System.Reflection.Metadata.MetadataUpdateHandlerAttribute(typeof(Editor.Drawers.HotReloadService))]
 namespace Editor.Drawers
 {
-    public static class HotReloadService
-    {
-        public static event Action<Type[]?>? UpdateApplicationEvent;
-
-        internal static void ClearCache(Type[]? types) { }
-        internal static void UpdateApplication(Type[]? types)
-        {
-            UpdateApplicationEvent?.Invoke(types);
-        }
-    }
-}
-#endif
-namespace Editor.Drawers
-{
+    [RequiresUnreferencedCode("Needs access to reflection to load drawers.")]
     public static class TypeDrawer
     {
-        static Dictionary<string, (object, MethodInfo drawMethod)> Drawers { get; } = [];
-
-        public static bool HasDrawer(IXtValue value) => HasDrawer(value.Type);
-        public static bool HasDrawer(IXtType type) => HasDrawer(type.Name);
-        public static bool HasDrawer(string type) => Drawers.ContainsKey(type);
+        static Dictionary<string, IValueDrawer<XtStructValue>> StructDrawers { get; } = [];
+        static Dictionary<string, IValueDrawer<XtArrayValue>> ArrayDrawers { get; } = [];
 
 
-        public static (object, MethodInfo drawMethod) GetDrawer(IXtType type) => GetDrawer(type.Name);
-        public static (object, MethodInfo drawMethod) GetDrawer(string type) => Drawers[type];
+        static bool TryDraw(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer)
+        {
+            switch (value)
+            {
+                case XtArrayValue a:
+                    return ArrayDrawers.TryGetValue(value.Type.Name, out var aDrawer)
+                        && aDrawer.DrawValue(xtDb, a, reference, commandBuffer, true);
+                case XtStructValue s:
+                    return StructDrawers.TryGetValue(value.Type.Name, out var sDrawer)
+                        && sDrawer.DrawValue(xtDb, s, reference, commandBuffer, true);
+                default:
+                    return false;
+            }
+        }
 
         public static bool Draw(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer)
         {
-            if (!HasDrawer(value)) return false;
-            var (drawer, drawMethod) = GetDrawer(value.Type);
-            return Draw(xtDb, value, reference, commandBuffer, drawer, drawMethod);
-        }
-
-        private static bool Draw(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer, object drawer, MethodInfo drawMethod)
-        {
-            switch(value)
+            switch (value)
             {
                 case XtHandleValue handle:
                     if (handle.Handle is null) return false;
-                    return Draw(xtDb, xtDb.Refs[handle.Handle.Value].Value, reference, commandBuffer, drawer, drawMethod);
+                    return Draw(xtDb, xtDb.Refs[handle.Handle.Value].Value, reference, commandBuffer);
                 case XtPointerValue pointer:
                     if (pointer.Value is null) return false;
-                    return Draw(xtDb, pointer.Value, reference, commandBuffer, drawer, drawMethod);
+                    return Draw(xtDb, pointer.Value, reference, commandBuffer);
                 case var c:
-                    var result = drawMethod.Invoke(drawer, [xtDb, value, reference, commandBuffer]);
-                    if (result is bool b) return b;
-                    return true;
+                    return TryDraw(xtDb, value, reference, commandBuffer);
             }
         }
 
         static TypeDrawer()
         {
-#if (DEBUG)
-            HotReloadService.UpdateApplicationEvent += _ => LoadDrawers();
-#endif
             LoadDrawers();
         }
         private static void LoadDrawers()
         {
-            Drawers.Clear();
             var types = Assembly.GetExecutingAssembly().GetTypes().Where(t => !t.IsInterface && !t.IsAbstract);
             foreach (var type in types)
             {
-                var attr = type.GetCustomAttribute<DrawAtribute>();
-                if (attr is null) continue;
-                Drawers[attr.TypeName] = (Activator.CreateInstance(type)!, type.GetMethod("DrawValue"));
+                if (!typeof(IValueDrawer<XtStructValue>).IsAssignableFrom(type)
+                    && !typeof(IValueDrawer<XtArrayValue>).IsAssignableFrom(type))
+                {
+                    continue;
+                }
+                var attrs = type.GetCustomAttributes<DrawAtribute>().ToArray();
+                if (attrs.Length == 0) continue;
+
+                object drawerInstance = Activator.CreateInstance(type)!;
+
+                var names = attrs.Select(a => a.TypeName);
+
+                TryAddDrawer(drawerInstance, names, StructDrawers);
+                TryAddDrawer(drawerInstance, names, ArrayDrawers);
             }
         }
+        private static void TryAddDrawer<T>(object possibleDrawer, IEnumerable<string> names, Dictionary<string, IValueDrawer<T>> current) where T : IXtValue
+        {
+            if (possibleDrawer is not IValueDrawer<T> drawer) return;
+            foreach (var name in names)
+            {
+                if (current.ContainsKey(name))
+                {
+                    throw new InvalidOperationException($"Drawer with name {name} already exists.");
+                }
+                current[name] = drawer;
+            }
+        }
+    }
+
+    public interface IValueDrawer<in T> where T : IXtValue
+    {
+        bool DrawValue(XtDatabase xtDb, T value, XtRef reference, ICommandBuffer commandBuffer, bool enabled);
     }
 }

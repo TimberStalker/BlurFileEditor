@@ -81,73 +81,29 @@ namespace Editor.Windows.Popups
 
                 }
                 ImGui.SameLine();
-                DirectoryPath(ref state);
+                Breadcrumb(ref state);
 
-                ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowViewport().Size.X, ImGui.GetWindowHeight() - 85));
-
-
-                ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
-
-                ImGui.Columns(4);
-                ImGui.Text("Name");
-                ImGui.NextColumn();
-                ImGui.Text("Date Modified");
-                ImGui.NextColumn();
-                ImGui.Text("Type");
-                ImGui.NextColumn();
-                ImGui.Text("Size");
-                ImGui.NextColumn();
-
-                foreach (var item in state.fileSystemEntries)
+                FileDisplay(ref state, info =>
                 {
-                    var info = item.SystemInfo;
-                    if (item.Texture is not null)
+                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                     {
-                        ImGui.Image(item.Texture, new Vector2(20, 20));
-                        ImGui.SameLine();
-                    }
-                    else
-                    {
-                    }
-                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowOverlap))
-                    {
-                        state.selectedFile = info.Name;
-                    }
-                    if (ImGui.IsItemHovered())
-                    {
-                        if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                        switch (info)
                         {
-                            switch (info)
-                            {
-                                case DirectoryInfo d:
-                                    state.Path = Path.Combine(state.Path, d.Name) + Path.DirectorySeparatorChar;
-                                    break;
-                            }
-                        }
-                        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
-                        {
-                            switch (info)
-                            {
-                                case DirectoryInfo d:
-                                    state.selectedFile = d.Name;
-                                    break;
-                            }
+                            case DirectoryInfo d:
+                                state.Path = Path.Combine(state.Path, d.Name) + Path.DirectorySeparatorChar;
+                                break;
                         }
                     }
-
-                    ImGui.NextColumn();
-                    ImGui.Text(info.LastWriteTime.ToString());
-                    ImGui.NextColumn();
-                    ImGui.Text("Type");
-                    ImGui.NextColumn();
-                    ImGui.Text("Size");
-                    ImGui.NextColumn();
-                }
-                ImGui.Columns(1);
-
-                ImGui.PopStyleVar();
-
-                ImGui.EndChild();
+                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                    {
+                        switch (info)
+                        {
+                            case DirectoryInfo d:
+                                state.selectedFile = d.Name;
+                                break;
+                        }
+                    }
+                });
 
                 ImGui.InputText("##file", ref state.selectedFile, 255);
                 ImGui.SameLine();
@@ -188,41 +144,12 @@ namespace Editor.Windows.Popups
 
                 }
                 ImGui.SameLine();
-                DirectoryPath(ref state);
+                Breadcrumb(ref state);
 
-                ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowViewport().Size.X, ImGui.GetWindowHeight() - 85));
-
-
-                ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
-
-                ImGui.Columns(4);
-                ImGui.Text("Name");
-                ImGui.NextColumn();
-                ImGui.Text("Date Modified");
-                ImGui.NextColumn();
-                ImGui.Text("Type");
-                ImGui.NextColumn();
-                ImGui.Text("Size");
-                ImGui.NextColumn();
-
-                ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
-                foreach (var item in state.fileSystemEntries)
+                string? tempFile = null;
+                FileDisplay(ref state, info =>
                 {
-                    ImGui.Spacing();
-                    var info = item.SystemInfo;
-                    if (item.Texture is not null)
-                    {
-                        ImGui.Image(item.Texture, new Vector2(20, 20));
-                        ImGui.SameLine();
-                    }
-                    else
-                    {
-                    }
-                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowOverlap, new Vector2(0, 20)))
-                    {
-                        state.selectedFile = info.Name;
-                    }
-                    if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                     {
                         switch (info)
                         {
@@ -232,26 +159,13 @@ namespace Editor.Windows.Popups
                             case FileInfo f:
                                 state.selectedFile = info.Name;
                                 result = true;
-                                file = Path.Combine(state.Path, state.selectedFile);
+                                tempFile = Path.Combine(state.Path, state.selectedFile);
                                 ImGui.CloseCurrentPopup();
                                 break;
                         }
                     }
-
-                    ImGui.NextColumn();
-                    ImGui.Text(info.LastWriteTime.ToString());
-                    ImGui.NextColumn();
-                    ImGui.Text("Type");
-                    ImGui.NextColumn();
-                    ImGui.Text("Size");
-                    ImGui.NextColumn();
-                }
-                ImGui.PopStyleVar();
-                ImGui.Columns(1);
-
-                ImGui.PopStyleVar();
-
-                ImGui.EndChild();
+                });
+                if (tempFile is not null) file = tempFile;
 
                 ImGui.InputText("##file", ref state.selectedFile, 255);
                 ImGui.SameLine();
@@ -267,7 +181,59 @@ namespace Editor.Windows.Popups
             return result;
         }
 
-        private static void DirectoryPath(ref FileDialogueState state)
+        private static void FileDisplay(ref FileDialogueState state, Action<FileSystemInfo> HandleInput)
+        {
+            ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowViewport().Size.X, ImGui.GetWindowHeight() - 85));
+
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
+
+            ImGui.Columns(4);
+            ImGui.Text("Name");
+            ImGui.NextColumn();
+            ImGui.Text("Date Modified");
+            ImGui.NextColumn();
+            ImGui.Text("Type");
+            ImGui.NextColumn();
+            ImGui.Text("Size");
+            ImGui.NextColumn();
+
+            ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
+            foreach (var item in state.fileSystemEntries)
+            {
+                ImGui.Spacing();
+                var info = item.SystemInfo;
+                if (item.Texture is not null)
+                {
+                    ImGui.Image(item.Texture, new Vector2(20, 20));
+                    ImGui.SameLine();
+                }
+                if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowOverlap, new Vector2(0, 20)))
+                {
+                    state.selectedFile = info.Name;
+                }
+                if (ImGui.IsItemHovered())
+                {
+                    HandleInput(info);
+                    
+                }
+
+                ImGui.NextColumn();
+                ImGui.Text(info.LastWriteTime.ToString());
+                ImGui.NextColumn();
+                ImGui.Text("Type");
+                ImGui.NextColumn();
+                ImGui.Text("Size");
+                ImGui.NextColumn();
+            }
+            ImGui.PopStyleVar();
+            ImGui.Columns(1);
+
+            ImGui.PopStyleVar();
+
+            ImGui.EndChild();
+        }
+
+        private static void Breadcrumb(ref FileDialogueState state)
         {
             ImGui.SetNextItemWidth(ImGui.GetColumnWidth());
             if (state.textEdit)

@@ -4,9 +4,9 @@ using ImGuiNET;
 namespace Editor.Drawers
 {
     [DrawAtribute("Rgb")]
-    public class RgbDrawer
+    public class RgbDrawer : IValueDrawer<XtStructValue>
     {
-        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer)
+        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var rValue = value.GetField<float>("r");
             var gValue = value.GetField<float>("g");
@@ -28,6 +28,9 @@ namespace Editor.Drawers
                     t => (t.target.rValue.Value, t.target.gValue.Value, t.target.bValue.Value) = t.newValues,
                     t => (t.target.rValue.Value, t.target.gValue.Value, t.target.bValue.Value) = t.oldValues);
             }
+            ImGui.SameLine();
+            ImGui.Text($"({rValue.Value:0.00}, {gValue.Value:0.00}, {bValue.Value:0.00})");
+            return true;
         }
     }
 }
