@@ -213,35 +213,39 @@ namespace Editor
 
             ProjectExplorerWindow explorerWindow = new ProjectExplorerWindow(directory);
 
-            GlobalXtDatabase.Refs.Clear();
-            GlobalXtDatabase.Types.Clear();
-
-            ScopedDatabases.Clear();
-
-            ConcurrentDictionary<uint, XtRef> globalRefs = [];
-
-            Parallel.ForEach(project.FlaskFiles, item =>
+            _ = Task.Run(() =>
             {
-                try
+
+                GlobalXtDatabase.Refs.Clear();
+                GlobalXtDatabase.Types.Clear();
+
+                ScopedDatabases.Clear();
+
+                ConcurrentDictionary<uint, XtRef> globalRefs = [];
+                Parallel.ForEach(project.FlaskFiles, item =>
                 {
-                    var scopedDatabase = Flask.Import(Path.Combine(directory, item));
-                    ScopedDatabases[item] = scopedDatabase;
-                    foreach (var (key, value) in scopedDatabase.Refs)
+                    try
                     {
-                        globalRefs[key] = value;
-                        RecordSourceMappings[key] = item;
+                        var scopedDatabase = Flask.Import(Path.Combine(directory, item));
+                        ScopedDatabases[item] = scopedDatabase;
+                        foreach (var (key, value) in scopedDatabase.Refs)
+                        {
+                            globalRefs[key] = value;
+                            RecordSourceMappings[key] = item;
+                        }
                     }
-                } catch(Exception ex)
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to parse {item}");
+                        Console.WriteLine(ex.ToString());
+                    }
+                });
+
+                foreach (var (key, item) in globalRefs)
                 {
-                    Console.WriteLine($"Failed to parse {item}");
-                    Console.WriteLine(ex.ToString());
+                    GlobalXtDatabase.Refs[key] = item;
                 }
             });
-
-            foreach (var (key, item) in globalRefs)
-            {
-                GlobalXtDatabase.Refs[key] = item;
-            }
 
             explorerWindow.OnOpenFile += (_, f) => OpenFile(f);
             WindowManager.AddWindow(explorerWindow);

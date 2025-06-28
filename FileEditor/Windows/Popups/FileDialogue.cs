@@ -214,14 +214,16 @@ namespace Editor.Windows.Popups
                 if (ImGui.IsItemHovered())
                 {
                     HandleInput(info);
-                    
                 }
 
                 ImGui.NextColumn();
+                ImGui.AlignTextToFramePadding();
                 ImGui.Text(info.LastWriteTime.ToString());
                 ImGui.NextColumn();
+                ImGui.AlignTextToFramePadding();
                 ImGui.Text("Type");
                 ImGui.NextColumn();
+                ImGui.AlignTextToFramePadding();
                 ImGui.Text("Size");
                 ImGui.NextColumn();
             }
