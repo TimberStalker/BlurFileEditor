@@ -15,19 +15,22 @@ using Pango;
 
 public class XtEditorWindow : GuiWindow
 {
-    XtDatabase XtDb { get; }
-    public GuiWindowManager Manager { get; }
     string File { get; }
+    public XtDatabase LocalDatabase { get; }
+    public XtDatabase GlobalDatabase { get; }
+    public IDictionary<uint, string> RecordSourceMappings { get; }
     string Name { get; }
-    List<UndoCommand> commandBuffer = new(5);
-    HistoryQueue<UndoCommand> historyQueue = new(128);
+
     int changeCount = 0;
-    public XtEditorWindow(GuiWindowManager manager, string path)
+    UndoCommandListBuffer commandBuffer = new();
+    HistoryQueue<UndoCommand> CommandHistory { get; } = new(128);
+    public XtEditorWindow(string file, XtDatabase localDatabase, XtDatabase globalDatabase, IDictionary<uint, string> recordSourceMappings)
     {
-        XtDb = Flask.Import(path);
-        Manager = manager;
-        File = path;
-        Name = Path.GetFileName(path);
+        File = file;
+        LocalDatabase = localDatabase;
+        GlobalDatabase = globalDatabase;
+        RecordSourceMappings = recordSourceMappings;
+        Name = Path.GetFileName(file);
     }
     public unsafe bool Draw()
     {
@@ -37,20 +40,21 @@ public class XtEditorWindow : GuiWindow
 
             if(ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows))
             {
-                var io = ImGui.GetIO();
-                if(io.KeyCtrl)
+                if(ImGui.IsKeyDown(ImGuiKey.ModCtrl))
                 {
-                    if (ImGui.IsKeyReleased('S'))
+                    if (ImGui.IsKeyReleased(ImGuiKey.S))
                     {
-                        Flask.Export(XtDb, File);
-                        changeCount = 0;
-                        //Debug.WriteLine("save");
-                    }
-                    if (ImGui.IsKeyReleased('Z'))
-                    {
-                        if(io.KeyShift)
+                        if(changeCount > 0)
                         {
-                            if(historyQueue.TryConsume(out var command))
+                            Flask.Export(LocalDatabase, File);
+                            changeCount = 0;
+                        }
+                    }
+                    if (ImGui.IsKeyReleased(ImGuiKey.Z))
+                    {
+                        if (ImGui.IsKeyDown(ImGuiKey.ModShift))
+                        {
+                            if (CommandHistory.TryConsume(out var command))
                             {
                                 command.Do();
                                 changeCount++;
@@ -58,7 +62,7 @@ public class XtEditorWindow : GuiWindow
                         }
                         else
                         {
-                            if(historyQueue.TryPop(out var command))
+                            if (CommandHistory.TryPop(out var command))
                             {
                                 command.Undo();
                                 changeCount--;
@@ -69,32 +73,33 @@ public class XtEditorWindow : GuiWindow
             }
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
 
-            int size = XtDb.Refs.Count;
+            int size = LocalDatabase.Refs.Count;
             XtRefItem[] refs = ArrayPool<XtRefItem>.Shared.Rent(size);
 
             int index = 0;
-            foreach (var (id, xtRef) in XtDb.Refs)
+            foreach (var (id, xtRef) in LocalDatabase.Refs)
             {
                 refs[index++] = new XtRefItem(id, xtRef);
             }
 
-            //var refs = XtDb.Refs.Select(r => new XtRefItem(r.Key, r.Value)).ToArray();
             for (int i = 0; i < size; i++)
             {
                 XtRefItem item = refs[i];
-                DrawXtItem(XtDb, item, item.XtRef, commandBuffer);
+                ImGui.PushID(i);
+                DrawXtItem(GlobalDatabase, item, item.XtRef, commandBuffer, true);
+                ImGui.PopID();
             }
 
             ArrayPool<XtRefItem>.Shared.Return(refs);
 
             ImGui.PopStyleVar();
 
-            if(commandBuffer.Count > 0)
+            if (commandBuffer.Count > 0)
             {
-                for(int i = 0; i < commandBuffer.Count; i++)
+                for (int i = 0; i < commandBuffer.Count; i++)
                 {
                     commandBuffer[i].Do();
-                    historyQueue.Push(commandBuffer[i]);
+                    CommandHistory.Push(commandBuffer[i]);
                 }
                 changeCount += commandBuffer.Count;
                 commandBuffer.Clear();
@@ -119,38 +124,17 @@ public class XtEditorWindow : GuiWindow
         };
         if(HasContent(xtDb, item.Value))
         {
-            return ImGui.TreeNodeEx(text, ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap);
+            return ImGui.TreeNodeEx(text, ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
         }
         else
         {
-            return ImGui.TreeNodeEx(text, ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap);
+            return ImGui.TreeNodeEx(text, ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
         }
     }
-    public static void DrawXtItem(XtDatabase xtDb, IXtValueItem item, XtRef reference, IList<UndoCommand> commandBuffer)
+    public static void DrawXtItem(XtDatabase xtDb, IXtValueItem item, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
     {
         bool showContent = DrawHeader(xtDb, item, reference);
-        if(item.Value is XtPointerValue or XtHandleValue or XtArrayValue)
-        {
-            if (ImGui.BeginPopupContextItem($"itemContext{item.GetHashCode()}"))
-            {
-                if (ImGui.MenuItem("Clear"))
-                {
-                    switch(item.Value)
-                    {
-                        case XtPointerValue pointerValue:
-                            pointerValue.Value = null;
-                            break;
-                        case XtHandleValue handleValue:
-                            handleValue.Handle = null;
-                            break;
-                        case XtArrayValue arrayValue:
-                            arrayValue.Array = null;
-                            break;
-                    }
-                }
-                ImGui.EndPopup();
-            }
-        }
+
         if(item is XtArrayItem v)
         {
             if (ImGui.BeginPopupContextItem($"itemContext{item.GetHashCode()}"))
@@ -158,35 +142,91 @@ public class XtEditorWindow : GuiWindow
                 if (ImGui.MenuItem("Remove"))
                 {
                     int index = v.Container.Values.IndexOf(v);
-                    commandBuffer.Add(UndoCommand.Create((target: v.Container, item: v, index), b => b.target.Values.RemoveAt(index), b => b.target.Values.Insert(b.index, b.item)));
+                    commandBuffer.Add((target: v.Container, item: v, index), b => b.target.Values.RemoveAt(index), b => b.target.Values.Insert(b.index, b.item));
                 }
                 ImGui.EndPopup();
             }
         }
         ImGui.SameLine(0, 10);
         ImGui.Text("=");
-        DrawValue(xtDb, item.Value, reference, commandBuffer);
+        switch(item.Value)
+        {
+            case XtHandleValue handle:
+                if (ImGui.BeginPopupContextItem($"itemContext{item.GetHashCode()}"))
+                {
+                    ImGui.MenuItem("Original File", false);
+                    ImGui.Separator();
+                    if (ImGui.MenuItem("Clear", enabled))
+                    {
+                        commandBuffer.Add(handle, null, handle.Handle, (h, v) => h.Handle = v);
+                    }
+                    ImGui.EndPopup();
+                }
+                if (handle.Handle is uint h)
+                {
+                    ImGui.BeginDisabled();
+                    DrawItemValueContent(xtDb, handle, xtDb.Refs[h], commandBuffer, showContent, enabled);
+                    ImGui.EndDisabled();
+                }
+                else
+                {
+                    DrawItemValueContent(xtDb, item.Value, reference, commandBuffer, showContent, enabled);
+                }
+                break;
+            case XtPointerValue pointer:
+                if (ImGui.BeginPopupContextItem($"itemContext{item.GetHashCode()}"))
+                {
+                    if (ImGui.MenuItem("Clear", enabled))
+                    {
+                        commandBuffer.Add(pointer, null, pointer.Value, (h, v) => h.Value = v);
+                    }
+                    ImGui.EndPopup();
+                }
+                goto default;
+            case XtArrayValue array:
+                if (ImGui.BeginPopupContextItem($"itemContext{item.GetHashCode()}"))
+                {
+                    if (ImGui.MenuItem("Clear", enabled))
+                    {
+                        commandBuffer.Add(array, null, array.Array, (h, v) => h.Array = v);
+                    }
+                    ImGui.EndPopup();
+                }
+                goto default;
+            default:
+                DrawItemValueContent(xtDb, item.Value, reference, commandBuffer, showContent, enabled);
+                break;
+        }
+    }
+
+    private static void DrawItemValueContent(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer, bool showContent, bool enabled)
+    {
+        DrawValue(xtDb, value, reference, commandBuffer, enabled);
+
         if (showContent)
         {
-            DrawContent(xtDb, item.Value, reference, commandBuffer);
+            DrawContent(xtDb, value, reference, commandBuffer, enabled);
             ImGui.TreePop();
         }
     }
-    public static void DrawContent(XtDatabase xtDb, IXtValue value, XtRef reference, IList<UndoCommand> commandBuffer)
+
+    public static void DrawContent(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
     {
         if (value is XtStructValue v) {
             var values = CollectionsMarshal.AsSpan(v.Values);
             for (int i = 0; i < values.Length; i++)
             {
-                DrawXtItem(xtDb, values[i], reference, commandBuffer);
+                ImGui.PushID(i);
+                DrawXtItem(xtDb, values[i], reference, commandBuffer, enabled);
+                ImGui.PopID();
             }
         } else if(value is XtPointerValue p && p.Value is not null)
         {
-            DrawContent(xtDb, p.Value, reference, commandBuffer);
+            DrawContent(xtDb, p.Value, reference, commandBuffer, enabled);
         } 
         else if(value is XtHandleValue h && h.Handle is uint r && xtDb.Refs.TryGetValue(r, out var xtRef) && xtRef.Value is XtStructValue)
         {
-            DrawContent(xtDb, xtRef.Value, reference, commandBuffer);
+            DrawContent(xtDb, xtRef.Value, xtRef, commandBuffer, enabled);
         } 
         else if(value is XtArrayValue a && a.Array is not null)
         {
@@ -194,11 +234,13 @@ public class XtEditorWindow : GuiWindow
             var values = CollectionsMarshal.AsSpan(a.Array.Values);
             for(int i = 0; i < values.Length; i++)
             {
-                DrawXtItem(xtDb, values[i], reference, commandBuffer);
+                ImGui.PushID(i);
+                DrawXtItem(xtDb, values[i], reference, commandBuffer, enabled);
+                ImGui.PopID();
             }
             if (ImGui.Button("Append"))
             {
-                commandBuffer.Add(UndoCommand.Create((target: a.Array, item: new XtArrayItem(a.Array, a.Array.Type.BaseType.CreateValue()), reference), b =>
+                commandBuffer.Add((target: a.Array, item: new XtArrayItem(a.Array, a.Array.Type.BaseType.CreateValue()), reference), b =>
                 {
                     b.target.Values.Add(b.item);
                     if(b.item.Type is not IXtCurryType)
@@ -212,16 +254,15 @@ public class XtEditorWindow : GuiWindow
                     {
                         b.reference.RefHeap.Remove(b.item.Value);
                     }
-                }));
+                });
             }
         }
     }
-    public static unsafe void DrawValue(XtDatabase xtDb, IXtValue value, XtRef reference, IList<UndoCommand> commandBuffer)
+    public static unsafe void DrawValue(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
     {
         ImGui.SameLine(0, 10);
-        if(TypeDrawer.HasDrawer(value))
+        if(TypeDrawer.Draw(xtDb, value, reference, commandBuffer))
         {
-            TypeDrawer.Draw(xtDb, value, reference, commandBuffer);
             return;
         }
         switch (value)
@@ -232,9 +273,7 @@ public class XtEditorWindow : GuiWindow
                 bool edit = v.Value;
                 if (ImGui.Checkbox($"##sbyte{v.GetHashCode()}", ref edit))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value), 
-                        b => b.target.Value = b.newValue, 
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -245,9 +284,7 @@ public class XtEditorWindow : GuiWindow
                 sbyte edit = v.Value;
                 if (ImGui.InputScalar($"##sbyte{v.GetHashCode()}", ImGuiDataType.S8, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value), 
-                        b => b.target.Value = b.newValue, 
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -258,9 +295,7 @@ public class XtEditorWindow : GuiWindow
                 short edit = v.Value;
                 if (ImGui.InputScalar($"##short{v.GetHashCode()}", ImGuiDataType.S16, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value), 
-                        b => b.target.Value = b.newValue, 
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -271,9 +306,7 @@ public class XtEditorWindow : GuiWindow
                 int edit = v.Value;
                 if (ImGui.InputScalar($"##int{v.GetHashCode()}", ImGuiDataType.S32, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value), 
-                        b => b.target.Value = b.newValue, 
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -284,9 +317,7 @@ public class XtEditorWindow : GuiWindow
                 long edit = v.Value;
                 if (ImGui.InputScalar($"##long{v.GetHashCode()}", ImGuiDataType.S64, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value), 
-                        b => b.target.Value = b.newValue, 
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -297,9 +328,7 @@ public class XtEditorWindow : GuiWindow
                 byte edit = v.Value;
                 if (ImGui.InputScalar($"##byte{v.GetHashCode()}", ImGuiDataType.U8, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value), 
-                        b => b.target.Value = b.newValue, 
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -310,9 +339,7 @@ public class XtEditorWindow : GuiWindow
                 ushort edit = v.Value;
                 if (ImGui.InputScalar($"##ushort{v.GetHashCode()}", ImGuiDataType.U16, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value), 
-                        b => b.target.Value = b.newValue, 
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -323,9 +350,7 @@ public class XtEditorWindow : GuiWindow
                 uint edit = v.Value;
                 if (ImGui.InputScalar($"##uint{v.GetHashCode()}", ImGuiDataType.U32, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value), 
-                        b => b.target.Value = b.newValue,
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -336,9 +361,7 @@ public class XtEditorWindow : GuiWindow
                 ulong edit = v.Value;
                 if (ImGui.InputScalar($"##ulong{v.GetHashCode()}", ImGuiDataType.U64, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value),
-                        b => b.target.Value = b.newValue,
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -349,9 +372,7 @@ public class XtEditorWindow : GuiWindow
                 float edit = v.Value;
                 if (ImGui.InputFloat($"##float{v.GetHashCode()}", ref edit))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value),
-                        b => b.target.Value = b.newValue,
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -362,9 +383,7 @@ public class XtEditorWindow : GuiWindow
                 double edit = v.Value;
                 if (ImGui.InputDouble($"##double{v.GetHashCode()}", ref edit))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value),
-                        b => b.target.Value = b.newValue,
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 break;
@@ -375,9 +394,7 @@ public class XtEditorWindow : GuiWindow
                 string edit = v.Value;
                 if (ImGui.InputText($"##string{v.GetHashCode()}", ref edit, 255))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value),
-                        b => b.target.Value = b.newValue,
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 ImGui.PopItemWidth();
@@ -389,9 +406,7 @@ public class XtEditorWindow : GuiWindow
                 uint edit = v.Value;
                 if (ImGui.InputScalar($"##locid{v.GetHashCode()}", ImGuiDataType.U32, (nint)(&edit)))
                 {
-                    commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value),
-                        b => b.target.Value = b.newValue,
-                        b => b.target.Value = b.oldValue));
+                    commandBuffer.Add(v, (LocId)edit, v.Value, (t, value) => t.Value = value);
                 }
 
                 ImGui.PopItemWidth();
@@ -404,9 +419,7 @@ public class XtEditorWindow : GuiWindow
                     uint edit = v.Value;
                     if (MultiCombo($"##flags{v.GetHashCode()}", ref edit, v.Type.Labels))
                     {
-                        commandBuffer.Add(UndoCommand.Create((target: v, newValue: edit, oldValue: v.Value),
-                            b => b.target.Value = b.newValue,
-                            b => b.target.Value = b.oldValue));
+                        commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }
                 }
                 else
@@ -415,9 +428,7 @@ public class XtEditorWindow : GuiWindow
                     int edit = (int)v.Value;
                     if (ImGui.Combo($"##enum{v.GetHashCode()}", ref edit, string.Join('\0', v.Type.Labels)))
                     {
-                        commandBuffer.Add(UndoCommand.Create((target: v, newValue: (uint)edit, oldValue: v.Value),
-                            b => b.target.Value = b.newValue,
-                            b => b.target.Value = b.oldValue));
+                        commandBuffer.Add(v, (uint)edit, v.Value, (t, value) => t.Value = value);
                     }
                 }
                 break;
@@ -440,7 +451,17 @@ public class XtEditorWindow : GuiWindow
                         {
                             if (ImGui.Button(item.Name))
                             {
-                                commandBuffer.Add(UndoCommand.Create((target: v, item: item.CreateValue(), reference), b => { b.target.Value = b.item; b.reference.RefHeap.Add(b.item); }, b => { b.target.Value = null; b.reference.RefHeap.Remove(b.item); }));
+                                commandBuffer.Add((target: v, item: item.CreateValue(), reference),
+                                    static b =>
+                                    {
+                                        b.target.Value = b.item;
+                                        b.reference.RefHeap.Add(b.item);
+                                    },
+                                    static b =>
+                                    {
+                                        b.target.Value = null;
+                                        b.reference.RefHeap.Remove(b.item);
+                                    });
                             }
                         }
                         ImGui.EndPopup();
@@ -452,26 +473,28 @@ public class XtEditorWindow : GuiWindow
                     }
                     if (ImGui.BeginPopup("usePop"))
                     {
-                        ImGui.BeginChild("usePopScroll", new Vector2(600, 200), false, ImGuiWindowFlags.AlwaysAutoResize);
+                        ImGui.BeginChild("usePopScroll", new Vector2(600, 200), ImGuiChildFlags.None, ImGuiWindowFlags.AlwaysAutoResize);
                         foreach (var heapValue in reference.RefHeap.Where(t => t.Type == v.Type.BaseType || (t.Type is XtStructType st && v.Type.BaseType is XtStructType pt && st.IsOfType(pt))))
                         {
                             bool showContent = false;
                             if (HasContent(xtDb, heapValue))
                             {
-                                showContent = ImGui.TreeNodeEx($"({heapValue.Type}){heapValue.GetHashCode()}", ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap);
+                                showContent = ImGui.TreeNodeEx($"({heapValue.Type}){heapValue.GetHashCode()}", ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
                             }
                             else
                             {
-                                showContent = ImGui.TreeNodeEx($"({heapValue.Type}){heapValue.GetHashCode()}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap);
+                                showContent = ImGui.TreeNodeEx($"({heapValue.Type}){heapValue.GetHashCode()}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
                             }
                             ImGui.SameLine();
                             if (ImGui.Button("add"))
                             {
-                                commandBuffer.Add(UndoCommand.Create((target: v, item: heapValue), b => b.target.Value = b.item, b => b.target.Value = null));
+                                commandBuffer.Add((target: v, item: heapValue),
+                                    b => b.target.Value = b.item,
+                                    b => b.target.Value = null);
                             }
                             if(showContent)
                             {
-                                DrawContent(xtDb, heapValue, reference, commandBuffer);
+                                DrawContent(xtDb, heapValue, reference, commandBuffer, enabled);
                                 ImGui.TreePop();
                             }
                         }
@@ -481,7 +504,7 @@ public class XtEditorWindow : GuiWindow
                 }
                 else
                 {
-                    DrawValue(xtDb, v.Value, reference, commandBuffer);
+                    DrawValue(xtDb, v.Value, reference, commandBuffer, enabled);
                 }
                 break;
             case XtHandleValue v:
@@ -504,7 +527,6 @@ public class XtEditorWindow : GuiWindow
                     if(xtDb.Refs.TryGetValue(v.Handle.Value, out var xtRef))
                     {
                         ImGui.Text($"({xtRef.Type})[{v.Handle}]");
-
                     }
                     else
                     {
@@ -519,7 +541,17 @@ public class XtEditorWindow : GuiWindow
                 {
                     if(ImGui.Button("new", new Vector2(80, 0)))
                     {
-                        commandBuffer.Add(UndoCommand.Create((target: v, array: new XtArray(v.Type), reference), b => { b.target.Array = b.array; reference.RefHeap.Add(b.array); }, b => { b.target.Array = null; reference.RefHeap.Remove(b.array); }));
+                        commandBuffer.Add((target: v, array: new XtArray(v.Type), reference), 
+                            b =>
+                            {
+                                b.target.Array = b.array;
+                                reference.RefHeap.Add(b.array);
+                            },
+                            b =>
+                            {
+                                b.target.Array = null;
+                                reference.RefHeap.Remove(b.array);
+                            });
                     }
                     ImGui.SameLine(0, 5);
                     if (ImGui.Button("use", new Vector2(80, 0)))

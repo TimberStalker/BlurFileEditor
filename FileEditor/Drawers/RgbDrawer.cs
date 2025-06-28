@@ -6,7 +6,7 @@ namespace Editor.Drawers
     [DrawAtribute("Rgb")]
     public class RgbDrawer
     {
-        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, IList<UndoCommand> commandBuffer)
+        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer)
         {
             var rValue = value.GetField<float>("r");
             var gValue = value.GetField<float>("g");
@@ -20,13 +20,13 @@ namespace Editor.Drawers
             ImGui.SameLine();
             if (ImGui.ColorEdit3($"##color {value.GetHashCode()}", ref color, ImGuiColorEditFlags.NoInputs))
             {
-                commandBuffer.Add(UndoCommand.Create(
-                    (target: (rValue, gValue, bValue),
-                    oldValues: (r: rValue.Value, g: gValue.Value, b: bValue.Value),
-                    newValues: (r: color.X, g: color.Y, b: color.Z)),
+                commandBuffer.Add((
+                        target: (rValue, gValue, bValue),
+                        oldValues: (r: rValue.Value, g: gValue.Value, b: bValue.Value),
+                        newValues: (r: color.X, g: color.Y, b: color.Z)
+                    ),
                     t => (t.target.rValue.Value, t.target.gValue.Value, t.target.bValue.Value) = t.newValues,
-                    t => (t.target.rValue.Value, t.target.gValue.Value, t.target.bValue.Value) = t.oldValues
-                    ));
+                    t => (t.target.rValue.Value, t.target.gValue.Value, t.target.bValue.Value) = t.oldValues);
             }
         }
     }

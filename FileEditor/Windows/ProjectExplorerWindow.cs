@@ -2,17 +2,18 @@
 using Editor.Drawers;
 using Editor.Windows;
 using ImGuiNET;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-public class ProjectExplorerWindow : GuiWindow
+public class ProjectExplorerWindow : GuiWindow, IDisposable
 {
     string filter = "";
     FileSystemObject parentObject;
-    public GuiWindowManager WindowManager { get; }
-    public ProjectExplorerWindow(string directory, GuiWindowManager windows)
+    public event EventHandler<string>? OnOpenFile;
+    public ProjectExplorerWindow(string directory)
     {
+        Debug.Assert(directory is not null);
         parentObject = FileSystemObject.Create(directory);
-        WindowManager = windows;
     }
 
 
@@ -33,10 +34,10 @@ public class ProjectExplorerWindow : GuiWindow
     public void DrawFileItem(FileSystemObject fileObject)
     {
         ImGuiTreeNodeFlags isLeaf = fileObject.Contents is null || fileObject.Contents.Length > 0 ? ImGuiTreeNodeFlags.None : ImGuiTreeNodeFlags.Leaf;
-        bool showContents = ImGui.TreeNodeEx($"##{fileObject.Name}", isLeaf | ImGuiTreeNodeFlags.AllowItemOverlap | ImGuiTreeNodeFlags.SpanFullWidth);
+        bool showContents = ImGui.TreeNodeEx($"##{fileObject.Name}", isLeaf | ImGuiTreeNodeFlags.AllowOverlap | ImGuiTreeNodeFlags.SpanFullWidth);
         if(ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
         {
-            OpenFile(fileObject.FilePath);
+            OnOpenFile?.Invoke(this, fileObject.FilePath);
         }
         ImGui.SameLine();
         ImGui.Image(fileObject.Icon, new System.Numerics.Vector2(12, 12));
@@ -52,25 +53,10 @@ public class ProjectExplorerWindow : GuiWindow
             ImGui.TreePop();
         }
     }
-    public void OpenFile(string file)
+
+    public void Dispose()
     {
-        if (MatchesExtension(file, ".bin", ".xt"))
-        {
-            WindowManager.AddWindow(new XtEditorWindow(WindowManager, file));
-        }
-        else if(MatchesExtension(file, ".png", ".jpg"))
-        {
-            WindowManager.AddWindow(new ImageWindow(file));
-        }
-        else if(MatchesExtension(file, ".dds"))
-        {
-            WindowManager.AddWindow(new DirectXImageWindow(file));
-        }
-    }
-    static bool MatchesExtension(string file, params string[] extensions)
-    {
-        string extension = Path.GetExtension(file);
-        return extensions.Any(e => e == extension);
+        OnOpenFile = null;
     }
 }
 public class FileSystemObject

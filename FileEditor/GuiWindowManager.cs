@@ -17,6 +17,14 @@ public class GuiWindowManager
     {
         pendingWindows.Remove(window);
     }
+    public void Clear()
+    {
+        foreach (var window in windows)
+        {
+            if (window is IDisposable d) d.Dispose();
+        }
+        windows.Clear();
+    }
     public void Draw()
     {
         GuiWindow? removeWindow = null;

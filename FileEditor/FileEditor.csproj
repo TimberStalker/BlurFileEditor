@@ -1,80 +1,70 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net8.0</TargetFramework>
-        <LangVersion>12</LangVersion>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <PublishAot>true</PublishAot>
-        <InvariantGlobalization>true</InvariantGlobalization>
-        <RootNamespace>Editor</RootNamespace>
-        <Platforms>x64;x86</Platforms>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <NoWarn>1701;1702;IL2121;CS8601;IL2121;CS8625</NoWarn>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <NoWarn>1701;1702;IL2121;CS8601;IL2121;CS8625</NoWarn>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <Content Include="./libs/GLFW/Linux/x64/libglfw.so.3.3">
-            <Link>runtimes/linux-x64/native/libglfw.so.3.3</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-
-        <Content Include="./libs/GLFW/Windows/x64/glfw3.dll">
-            <Link>runtimes/win-x64/native/glfw3.dll</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-
-        <Content Include="./libs/GLFW/Windows/x86/glfw3.dll">
-            <Link>runtimes/win-x86/native/glfw3.dll</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="runtimes\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="DirectXTexNet" Version="1.0.7" />
-      <PackageReference Include="GdkSharp" Version="3.24.24.95" />
-      <PackageReference Include="GioSharp" Version="3.24.24.95" />
-      <PackageReference Include="ImGui.NET" Version="1.78.0" />
-      <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.106">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="SkiaSharp" Version="3.116.1" />
-      <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
-      <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.116.1" />
-      <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="runtimes\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Remove="runtimes\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\BlurFileFormats\BlurFileFormats.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="Shaders\skybox.frag">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Shaders\skybox.vert">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>Editor</RootNamespace>
+    <Platforms>x64;x86</Platforms>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <NoWarn>1701;1702;IL2121;CS8601;IL2121;CS8625</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <NoWarn>1701;1702;IL2121;CS8601;IL2121;CS8625</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="./libs/GLFW/Linux/x64/libglfw.so.3.3">
+      <Link>runtimes/linux-x64/native/libglfw.so.3.3</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="./libs/GLFW/Windows/x64/glfw3.dll">
+      <Link>runtimes/win-x64/native/glfw3.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="./libs/GLFW/Windows/x86/glfw3.dll">
+      <Link>runtimes/win-x86/native/glfw3.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="runtimes\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DirectXTexNet" Version="1.0.7" />
+    <PackageReference Include="GdkSharp" Version="3.24.24.95" />
+    <PackageReference Include="GioSharp" Version="3.24.24.95" />
+    <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.106">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.116.1" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="runtimes\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="runtimes\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\BlurFileFormats\BlurFileFormats.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Shaders\skybox.frag">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\skybox.vert">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

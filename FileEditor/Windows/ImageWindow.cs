@@ -77,7 +77,7 @@ public class DirectXImageWindow : GuiWindow, IDisposable
         if (ImGui.Begin($"{Path.GetFileName(TexturePath)}##{TexturePath}", ref open, ImGuiWindowFlags.NoCollapse))
         {
             var size = ImGui.GetWindowSize();
-            ImGui.BeginChildFrame(2, size - new Vector2(20, 40), ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+            ImGui.BeginChild(2, size - new Vector2(20, 40), ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
             Display.Draw();
             ImGui.End();
         }
@@ -111,7 +111,7 @@ public class DirectXImageWindow : GuiWindow, IDisposable
         Vector2 halfPadding = new Vector2(10, 10);
         public void Draw()
         {
-            ImGui.BeginChild("container", Vector2.Zero, true, ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+            ImGui.BeginChild("container", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
             var size = ImGui.GetWindowSize();
             var minSize = MathF.Max(MathF.Min(size.X, size.Y) - 60, 80);
@@ -216,7 +216,7 @@ public class DirectXImageWindow : GuiWindow, IDisposable
         Vector2 halfPadding = new Vector2(10, 10);
         public void Draw()
         {
-            ImGui.BeginChild("container", Vector2.Zero, true);
+            ImGui.BeginChild("container", Vector2.Zero, ImGuiChildFlags.None);
             var size = ImGui.GetWindowSize() - padding;
             if(lastSize != size)
             {

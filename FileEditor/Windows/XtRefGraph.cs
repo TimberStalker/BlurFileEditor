@@ -24,7 +24,7 @@ public class XtRefGraph : GuiWindow
 
         if(ImGui.Begin("Ref Viewer", ref isOpen, ImGuiWindowFlags.NoCollapse))
         {
-            if(ImGui.BeginChild("scrollingRegion", Vector2.Zero, true, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoMove))
+            if(ImGui.BeginChild("scrollingRegion", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoMove))
             {
                 //ImGui.PushClipRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), true);
                 foreach (var node in Nodes)
@@ -58,7 +58,7 @@ public class XtRefGraph : GuiWindow
 
 
             ImGui.SetCursorScreenPos(position);
-            if (ImGui.BeginChild(GetHashCode().ToString(), Vector2.One * 150, true, ImGuiWindowFlags.NoTitleBar  | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize))
+            if (ImGui.BeginChild(GetHashCode().ToString(), Vector2.One * 150, ImGuiChildFlags.None, ImGuiWindowFlags.NoTitleBar  | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize))
             {
                 ImGui.Text(Value.ToString());
                 ImGui.EndChild();

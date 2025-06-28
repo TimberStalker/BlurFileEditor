@@ -83,7 +83,7 @@ namespace Editor.Windows.Popups
                 ImGui.SameLine();
                 DirectoryPath(ref state);
 
-                ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowContentRegionWidth(), ImGui.GetWindowHeight() - 85));
+                ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowViewport().Size.X, ImGui.GetWindowHeight() - 85));
 
 
                 ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
@@ -109,7 +109,7 @@ namespace Editor.Windows.Popups
                     else
                     {
                     }
-                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap))
+                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowOverlap))
                     {
                         state.selectedFile = info.Name;
                     }
@@ -190,7 +190,7 @@ namespace Editor.Windows.Popups
                 ImGui.SameLine();
                 DirectoryPath(ref state);
 
-                ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowContentRegionWidth(), ImGui.GetWindowHeight() - 85));
+                ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowViewport().Size.X, ImGui.GetWindowHeight() - 85));
 
 
                 ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
@@ -218,7 +218,7 @@ namespace Editor.Windows.Popups
                     else
                     {
                     }
-                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0, 20)))
+                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowOverlap, new Vector2(0, 20)))
                     {
                         state.selectedFile = info.Name;
                     }

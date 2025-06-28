@@ -8,7 +8,7 @@ namespace Editor.Drawers
     [DrawAtribute("Vec3")]
     public class Vec3Drawer
     {
-        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, IList<UndoCommand> commandBuffer)
+        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer)
         {
             var xItem = value.GetFieldItem("vx");
             var yItem = value.GetFieldItem("vy");
@@ -17,19 +17,19 @@ namespace Editor.Drawers
             ImGui.Text("(");
 
             ImGui.SameLine(0, 0);
-            XtEditorWindow.DrawValue(xtDb, xItem.Value, reference, commandBuffer);
+            XtEditorWindow.DrawValue(xtDb, xItem.Value, reference, commandBuffer, true);
 
             ImGui.SameLine(0, 0);
             ImGui.Text(",");
 
             ImGui.SameLine(0, 0);
-            XtEditorWindow.DrawValue(xtDb, yItem.Value, reference, commandBuffer);
+            XtEditorWindow.DrawValue(xtDb, yItem.Value, reference, commandBuffer, true);
 
             ImGui.SameLine(0, 0);
             ImGui.Text(",");
 
             ImGui.SameLine(0, 0);
-            XtEditorWindow.DrawValue(xtDb, zItem.Value, reference, commandBuffer);
+            XtEditorWindow.DrawValue(xtDb, zItem.Value, reference, commandBuffer, true);
 
             ImGui.SameLine();
             ImGui.Text(")");
@@ -38,7 +38,7 @@ namespace Editor.Drawers
     [DrawAtribute("Vec2")]
     public class Vec2Drawer
     {
-        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, IList<UndoCommand> commandBuffer)
+        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer)
         {
             var xItem = value.GetFieldItem("vx");
             var yItem = value.GetFieldItem("vy");
@@ -46,13 +46,13 @@ namespace Editor.Drawers
             ImGui.Text("(");
 
             ImGui.SameLine(0, 0);
-            XtEditorWindow.DrawValue(xtDb, xItem.Value, reference, commandBuffer);
+            XtEditorWindow.DrawValue(xtDb, xItem.Value, reference, commandBuffer, true);
 
             ImGui.SameLine(0, 0);
             ImGui.Text(",");
 
             ImGui.SameLine(0, 0);
-            XtEditorWindow.DrawValue(xtDb, yItem.Value, reference, commandBuffer);
+            XtEditorWindow.DrawValue(xtDb, yItem.Value, reference, commandBuffer, true);
 
             ImGui.SameLine();
             ImGui.Text(")");
@@ -61,18 +61,18 @@ namespace Editor.Drawers
     [DrawAtribute("RangeI8")]
     public class RangeI8Drawer
     {
-        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, IList<UndoCommand> commandBuffer)
+        public void DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer)
         {
             var fromItem = value.GetFieldItem("from");
             var toItem = value.GetFieldItem("to");
 
-            XtEditorWindow.DrawValue(xtDb, fromItem.Value, reference, commandBuffer);
+            XtEditorWindow.DrawValue(xtDb, fromItem.Value, reference, commandBuffer, true);
 
             ImGui.SameLine(0, 0);
             ImGui.Text("-");
 
             ImGui.SameLine(0, 0);
-            XtEditorWindow.DrawValue(xtDb, toItem.Value, reference, commandBuffer);
+            XtEditorWindow.DrawValue(xtDb, toItem.Value, reference, commandBuffer, true);
         }
     }
 }

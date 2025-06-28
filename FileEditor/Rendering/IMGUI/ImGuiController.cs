@@ -140,6 +140,8 @@ namespace Editor.Rendering.IMGUI {
             UpdateMousePosAndButtons();
             UpdateMouseCursor();
             
+            
+
             ImGui.NewFrame();
         }
 
@@ -165,45 +167,107 @@ namespace Editor.Rendering.IMGUI {
             
             io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         }
+        private bool TryMapKey(int key, out ImGuiKey result)
+        {
+            ImGuiKey KeyToImGuiKeyShortcut(int keyToConvert, int startKey1, ImGuiKey startKey2)
+            {
+                int changeFromStart1 = keyToConvert - startKey1;
+                return startKey2 + changeFromStart1;
+            }
 
+            result = key switch
+            {
+                >= GLFW_KEY_F1 and <= GLFW_KEY_F24 => KeyToImGuiKeyShortcut(key, GLFW_KEY_F1, ImGuiKey.F1),
+                >= GLFW_KEY_KP_0 and <= GLFW_KEY_KP_9 => KeyToImGuiKeyShortcut(key, GLFW_KEY_KP_0, ImGuiKey.Keypad0),
+                >= GLFW_KEY_A and <= GLFW_KEY_Z => KeyToImGuiKeyShortcut(key, GLFW_KEY_A, ImGuiKey.A),
+                >= GLFW_KEY_0 and <= GLFW_KEY_9 => KeyToImGuiKeyShortcut(key, GLFW_KEY_0, ImGuiKey._0),
+                GLFW_KEY_LEFT_SHIFT or GLFW_KEY_RIGHT_SHIFT => ImGuiKey.ModShift,
+                GLFW_KEY_LEFT_CONTROL or GLFW_KEY_RIGHT_CONTROL => ImGuiKey.ModCtrl,
+                GLFW_KEY_LEFT_ALT or GLFW_KEY_RIGHT_ALT => ImGuiKey.ModAlt,
+                GLFW_KEY_LEFT_SUPER or GLFW_KEY_RIGHT_SUPER => ImGuiKey.ModSuper,
+                GLFW_KEY_MENU => ImGuiKey.Menu,
+                GLFW_KEY_UP => ImGuiKey.UpArrow,
+                GLFW_KEY_DOWN => ImGuiKey.DownArrow,
+                GLFW_KEY_LEFT => ImGuiKey.LeftArrow,
+                GLFW_KEY_RIGHT => ImGuiKey.RightArrow,
+                GLFW_KEY_ENTER => ImGuiKey.Enter,
+                GLFW_KEY_ESCAPE => ImGuiKey.Escape,
+                GLFW_KEY_SPACE => ImGuiKey.Space,
+                GLFW_KEY_TAB => ImGuiKey.Tab,
+                GLFW_KEY_BACKSPACE => ImGuiKey.Backspace,
+                GLFW_KEY_INSERT => ImGuiKey.Insert,
+                GLFW_KEY_DELETE => ImGuiKey.Delete,
+                GLFW_KEY_PAGE_UP => ImGuiKey.PageUp,
+                GLFW_KEY_PAGE_DOWN => ImGuiKey.PageDown,
+                GLFW_KEY_HOME => ImGuiKey.Home,
+                GLFW_KEY_END => ImGuiKey.End,
+                GLFW_KEY_CAPS_LOCK => ImGuiKey.CapsLock,
+                GLFW_KEY_SCROLL_LOCK => ImGuiKey.ScrollLock,
+                GLFW_KEY_PRINT_SCREEN => ImGuiKey.PrintScreen,
+                GLFW_KEY_PAUSE => ImGuiKey.Pause,
+                GLFW_KEY_NUM_LOCK => ImGuiKey.NumLock,
+                GLFW_KEY_KP_DIVIDE => ImGuiKey.KeypadDivide,
+                GLFW_KEY_KP_MULTIPLY => ImGuiKey.KeypadMultiply,
+                GLFW_KEY_KP_SUBTRACT => ImGuiKey.KeypadSubtract,
+                GLFW_KEY_KP_ADD => ImGuiKey.KeypadAdd,
+                GLFW_KEY_KP_DECIMAL => ImGuiKey.KeypadDecimal,
+                GLFW_KEY_KP_ENTER => ImGuiKey.KeypadEnter,
+                GLFW_KEY_GRAVE_ACCENT => ImGuiKey.GraveAccent,
+                GLFW_KEY_MINUS => ImGuiKey.Minus,
+                GLFW_KEY_EQUAL => ImGuiKey.Equal,
+                GLFW_KEY_LEFT_BRACKET => ImGuiKey.LeftBracket,
+                GLFW_KEY_RIGHT_BRACKET => ImGuiKey.RightBracket,
+                GLFW_KEY_SEMICOLON => ImGuiKey.Semicolon,
+                GLFW_KEY_APOSTROPHE => ImGuiKey.Apostrophe,
+                GLFW_KEY_COMMA => ImGuiKey.Comma,
+                GLFW_KEY_PERIOD => ImGuiKey.Period,
+                GLFW_KEY_SLASH => ImGuiKey.Slash,
+                GLFW_KEY_BACKSLASH => ImGuiKey.Backslash,
+                _ => ImGuiKey.None
+            };
+
+            return result != ImGuiKey.None;
+        }
         /// <summary>
         /// Set up GLFW-related callbacks used by ImGui.
         /// </summary>
         private void SetupInputCallbacks() {
             //Set up the IO's KeyMap
-            io.KeyMap[(int)ImGuiKey.Tab] = GLFW_KEY_TAB;
-            
-            io.KeyMap[(int)ImGuiKey.LeftArrow] = GLFW_KEY_LEFT;
-            io.KeyMap[(int)ImGuiKey.RightArrow] = GLFW_KEY_RIGHT;
-            io.KeyMap[(int)ImGuiKey.UpArrow] = GLFW_KEY_RIGHT;
-            io.KeyMap[(int)ImGuiKey.DownArrow] = GLFW_KEY_DOWN;
-            
-            io.KeyMap[(int)ImGuiKey.PageUp] = GLFW_KEY_PAGE_UP;
-            io.KeyMap[(int)ImGuiKey.PageDown] = GLFW_KEY_PAGE_DOWN;
-            
-            io.KeyMap[(int)ImGuiKey.Home] = GLFW_KEY_HOME;
-            io.KeyMap[(int)ImGuiKey.End] = GLFW_KEY_END;
-            io.KeyMap[(int)ImGuiKey.Insert] = GLFW_KEY_INSERT;
-            io.KeyMap[(int)ImGuiKey.Delete] = GLFW_KEY_DELETE;
-            
-            io.KeyMap[(int)ImGuiKey.Backspace] = GLFW_KEY_BACKSPACE;
-            io.KeyMap[(int)ImGuiKey.Space] = GLFW_KEY_SPACE;
-            io.KeyMap[(int)ImGuiKey.Enter] = GLFW_KEY_ENTER;
-            io.KeyMap[(int)ImGuiKey.Escape] = GLFW_KEY_ESCAPE;
-            io.KeyMap[(int)ImGuiKey.KeyPadEnter] = GLFW_KEY_KP_ENTER;
-            
-            io.KeyMap[(int)ImGuiKey.A] = GLFW_KEY_A;
-            io.KeyMap[(int)ImGuiKey.C] = GLFW_KEY_C;
-            io.KeyMap[(int)ImGuiKey.V] = GLFW_KEY_V;
-            io.KeyMap[(int)ImGuiKey.X] = GLFW_KEY_X;
-            io.KeyMap[(int)ImGuiKey.Y] = GLFW_KEY_Y;
-            io.KeyMap[(int)ImGuiKey.Z] = GLFW_KEY_Z;
+            //io.KeyMap[(int)ImGuiKey.Tab] = GLFW_KEY_TAB;
+            //
+            //io.KeyMap[(int)ImGuiKey.LeftArrow] = GLFW_KEY_LEFT;
+            //io.KeyMap[(int)ImGuiKey.RightArrow] = GLFW_KEY_RIGHT;
+            //io.KeyMap[(int)ImGuiKey.UpArrow] = GLFW_KEY_RIGHT;
+            //io.KeyMap[(int)ImGuiKey.DownArrow] = GLFW_KEY_DOWN;
+            //
+            //io.KeyMap[(int)ImGuiKey.PageUp] = GLFW_KEY_PAGE_UP;
+            //io.KeyMap[(int)ImGuiKey.PageDown] = GLFW_KEY_PAGE_DOWN;
+            //
+            //io.KeyMap[(int)ImGuiKey.Home] = GLFW_KEY_HOME;
+            //io.KeyMap[(int)ImGuiKey.End] = GLFW_KEY_END;
+            //io.KeyMap[(int)ImGuiKey.Insert] = GLFW_KEY_INSERT;
+            //io.KeyMap[(int)ImGuiKey.Delete] = GLFW_KEY_DELETE;
+            //
+            //io.KeyMap[(int)ImGuiKey.Backspace] = GLFW_KEY_BACKSPACE;
+            //io.KeyMap[(int)ImGuiKey.Space] = GLFW_KEY_SPACE;
+            //io.KeyMap[(int)ImGuiKey.Enter] = GLFW_KEY_ENTER;
+            //io.KeyMap[(int)ImGuiKey.Escape] = GLFW_KEY_ESCAPE;
+            //io.KeyMap[(int)ImGuiKey.KeyPadEnter] = GLFW_KEY_KP_ENTER;
+            //
+            //io.KeyMap[(int)ImGuiKey.A] = GLFW_KEY_A;
+            //io.KeyMap[(int)ImGuiKey.C] = GLFW_KEY_C;
+            //io.KeyMap[(int)ImGuiKey.V] = GLFW_KEY_V;
+            //io.KeyMap[(int)ImGuiKey.X] = GLFW_KEY_X;
+            //io.KeyMap[(int)ImGuiKey.Y] = GLFW_KEY_Y;
+            //io.KeyMap[(int)ImGuiKey.Z] = GLFW_KEY_Z;
             
             //Set up ImGui's clipboard stuff
-            io.SetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(setClipboardTextFunc);
-            io.GetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(getClipboardTextFunc);
-            io.ClipboardUserData = Window.Instance.GLFWWindow;
+
+            //io.SetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(setClipboardTextFunc);
+            //io.GetClipboardTextFn = Marshal.GetFunctionPointerForDelegate(getClipboardTextFunc);
+            //io.ClipboardUserData = Window.Instance.GLFWWindow;
             
+
             //Set up the Mouse Cursors
             mouseCursors[(int)ImGuiMouseCursor.Arrow] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
             mouseCursors[(int)ImGuiMouseCursor.TextInput] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
@@ -426,7 +490,7 @@ namespace Editor.Rendering.IMGUI {
             Vector2 _clipScale = _drawData.FramebufferScale;
 
             for (int i=0; i<_drawData.CmdListsCount; i++) {
-                ImDrawListPtr _cmdList = _drawData.CmdListsRange[i];
+                ImDrawListPtr _cmdList = _drawData.CmdLists[i];
                 
                 glBufferData(GL_ARRAY_BUFFER, (ulong) (_cmdList.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>()),
                     _cmdList.VtxBuffer.Data, GL_STREAM_DRAW);
@@ -497,16 +561,34 @@ namespace Editor.Rendering.IMGUI {
 
         /// <inheritdoc cref="GLFW.glfwSetKeyCallback"/>
         private void KeyCallback(IntPtr _, int _key, int _scanCode, int _action, int _mods) {
-            if(_key != -1)
-            {
-                if (_action == GLFW_PRESS) io.KeysDown[_key] = true;
-                else if (_action == GLFW_RELEASE) io.KeysDown[_key] = false;
-            }
-            
-            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-            io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+            //if(_key != -1)
+            //{
+            //    if (_action == GLFW_PRESS) io.KeysDown[_key] = true;
+            //    else if (_action == GLFW_RELEASE) io.KeysDown[_key] = false;
+            //}
+            //if((_mods & GLFW_MOD_CONTROL) != 0)
+            //{
+            //    io.KeyMods |= ImGuiKey.ModCtrl;
+            //}
+            //if((_mods & GLFW_MOD_SHIFT) != 0)
+            //{
+            //    io.KeyMods |= ImGuiKey.ModShift;
+            //}
+            //if((_mods & GLFW_MOD_ALT) != 0)
+            //{
+            //    io.KeyMods |= ImGuiKey.ModAlt;
+            //}
+            //if((_mods & GLFW_MOD_SUPER) != 0)
+            //{
+            //    io.KeyMods |= ImGuiKey.ModSuper;
+            //}
+            if(TryMapKey(_key, out var key))
+                io.AddKeyEvent(key, _action is GLFW_PRESS or GLFW_REPEAT);
+            //io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+            //io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+            //io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+            //io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+            //io.AddKeyEvent(key, true);
         }
 
         /// <inheritdoc cref="GLFW.glfwSetCharCallback"/>

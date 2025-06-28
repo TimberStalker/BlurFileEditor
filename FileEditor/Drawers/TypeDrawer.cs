@@ -1,6 +1,7 @@
 ﻿using BlurFileFormats.FlaskReflection;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Reflection.Metadata;
 #if DEBUG
 [assembly: System.Reflection.Metadata.MetadataUpdateHandlerAttribute(typeof(Editor.Drawers.HotReloadService))]
 namespace Editor.Drawers
@@ -31,10 +32,28 @@ namespace Editor.Drawers
         public static (object, MethodInfo drawMethod) GetDrawer(IXtType type) => GetDrawer(type.Name);
         public static (object, MethodInfo drawMethod) GetDrawer(string type) => Drawers[type];
 
-        public static void Draw(XtDatabase xtDb, IXtValue value, XtRef reference, IList<UndoCommand> commandBuffer)
+        public static bool Draw(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer)
         {
+            if (!HasDrawer(value)) return false;
             var (drawer, drawMethod) = GetDrawer(value.Type);
-            drawMethod.Invoke(drawer, [xtDb, value, reference, commandBuffer]);
+            return Draw(xtDb, value, reference, commandBuffer, drawer, drawMethod);
+        }
+
+        private static bool Draw(XtDatabase xtDb, IXtValue value, XtRef reference, ICommandBuffer commandBuffer, object drawer, MethodInfo drawMethod)
+        {
+            switch(value)
+            {
+                case XtHandleValue handle:
+                    if (handle.Handle is null) return false;
+                    return Draw(xtDb, xtDb.Refs[handle.Handle.Value].Value, reference, commandBuffer, drawer, drawMethod);
+                case XtPointerValue pointer:
+                    if (pointer.Value is null) return false;
+                    return Draw(xtDb, pointer.Value, reference, commandBuffer, drawer, drawMethod);
+                case var c:
+                    var result = drawMethod.Invoke(drawer, [xtDb, value, reference, commandBuffer]);
+                    if (result is bool b) return b;
+                    return true;
+            }
         }
 
         static TypeDrawer()
