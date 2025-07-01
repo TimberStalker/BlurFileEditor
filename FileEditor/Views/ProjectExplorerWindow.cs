@@ -1,40 +1,61 @@
 ﻿using Editor;
 using Editor.Drawers;
+using Editor.Views;
 using Editor.Windows;
 using ImGuiNET;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-public class ProjectExplorerWindow : GuiWindow, IDisposable
+public class ProjectExplorerWindow : IView, IDisposable
 {
     string filter = "";
-    FileSystemObject parentObject;
+    FileSystemObject? parentDirectory;
+    public string Name => "Project Explorer";
+    public string Id => "Project Explorer";
+    public string? Shortcut => null;
     public event EventHandler<string>? OnOpenFile;
-    public ProjectExplorerWindow(string directory)
+    bool open;
+    bool focus;
+
+    public void SetDirectory(string? directory)
     {
-        Debug.Assert(directory is not null);
-        parentObject = FileSystemObject.Create(directory);
+        if(directory is null)
+        {
+            parentDirectory = null;
+        } else
+        {
+            parentDirectory = FileSystemObject.Create(directory);
+        }
     }
 
-
-    public bool Draw()
+    public void Draw()
     {
-        bool open = true;
-        if(ImGui.Begin("Project Explorer", ref open, ImGuiWindowFlags.NoCollapse))
+        if(focus)
         {
-            if(ImGui.InputText("##filterInput", ref filter, 100))
+            ImGui.SetNextWindowFocus();
+            focus = false;
+        }
+        if (ImGui.Begin("Project Explorer", ref open, ImGuiWindowFlags.NoCollapse))
+        {
+            ImGui.InputText("##filterInput", ref filter, 100);
+            if(parentDirectory is not null)
             {
+                DrawFileItem(parentDirectory);
             }
-            DrawFileItem(parentObject);
 
             ImGui.End();
         }
-        return true;
     }
-    public void DrawFileItem(FileSystemObject fileObject)
+    public void Focus()
     {
-        ImGuiTreeNodeFlags isLeaf = fileObject.Contents is null || fileObject.Contents.Length > 0 ? ImGuiTreeNodeFlags.None : ImGuiTreeNodeFlags.Leaf;
-        bool showContents = ImGui.TreeNodeEx($"##{fileObject.Name}", isLeaf | ImGuiTreeNodeFlags.AllowOverlap | ImGuiTreeNodeFlags.SpanFullWidth);
+        focus = true;
+    }
+    void DrawFileItem(FileSystemObject fileObject)
+    {
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags.AllowOverlap | ImGuiTreeNodeFlags.SpanFullWidth;
+        if (!fileObject.HasContents) flags |= ImGuiTreeNodeFlags.Leaf;
+
+        bool showContents = ImGui.TreeNodeEx($"##{fileObject.Name}", flags);
         if(ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
         {
             OnOpenFile?.Invoke(this, fileObject.FilePath);
@@ -45,7 +66,7 @@ public class ProjectExplorerWindow : GuiWindow, IDisposable
         ImGui.Text(fileObject.Name);
         if (showContents)
         {
-            if (fileObject.Contents is null) fileObject.PopulateContents();
+            fileObject.PopulateContents();
             foreach (var content in fileObject.Contents)
             {
                 DrawFileItem(content);
@@ -64,6 +85,7 @@ public class FileSystemObject
     public string Name { get; }
     public string FilePath { get; }
     public Texture2D Icon { get; }
+    public bool HasContents => Contents is null || Contents.Length > 0;
     public FileSystemObject[]? Contents { get; private set; }
     FileSystemObject(string path, Texture2D icon)
     {
@@ -79,6 +101,7 @@ public class FileSystemObject
     [MemberNotNull(nameof(Contents))]
     public void PopulateContents()
     {
+        if (Contents is not null) return;
         var directories = Directory.GetDirectories(FilePath);
         var files = Directory.GetFiles(FilePath);
         int x = 0;

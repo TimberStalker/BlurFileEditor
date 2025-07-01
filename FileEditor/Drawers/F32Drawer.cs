@@ -1,4 +1,5 @@
 ﻿using BlurFileFormats.FlaskReflection;
+using Editor.Projects;
 using ImGuiNET;
 using System;
 using System.ComponentModel.DataAnnotations;
@@ -9,7 +10,7 @@ namespace Editor.Drawers
     [DrawAtribute("RP_LinearFunction")]
     public class LinearFunctionDrawer : IValueDrawer<XtStructValue>
     {
-        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
+        public bool DrawValue(Project project, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var yScale = value.GetField<float>("yScale");
             var dataPoints = value.GetFieldItem("dataPoints");

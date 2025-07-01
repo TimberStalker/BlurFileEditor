@@ -41,21 +41,3 @@ public class AppSettings
 internal partial class AppSettingsJsonContext : JsonSerializerContext
 {
 }
-public class Project
-{
-    public List<string> FlaskFiles { get; set; } = new();
-    public List<string> LocFiles { get; set; } = new();
-    public static void Save(string filepath, Project project)
-    {
-        File.WriteAllText(filepath, JsonSerializer.Serialize(project, ProjectJsonContext.Default.Project));
-    }
-    public static Project? Load(string filepath)
-    {
-        return JsonSerializer.Deserialize(File.ReadAllText(filepath), ProjectJsonContext.Default.Project);
-    }
-}
-
-[JsonSerializable(typeof(Project))]
-internal partial class ProjectJsonContext : JsonSerializerContext
-{
-}

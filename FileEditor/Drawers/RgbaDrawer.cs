@@ -1,4 +1,5 @@
 ﻿using BlurFileFormats.FlaskReflection;
+using Editor.Projects;
 using ImGuiNET;
 
 namespace Editor.Drawers
@@ -6,7 +7,7 @@ namespace Editor.Drawers
     [DrawAtribute("Rgba")]
     public class RgbaDrawer : IValueDrawer<XtStructValue>
     {
-        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
+        public bool DrawValue(Project project, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var rValue = value.GetField<float>("r");
             var gValue = value.GetField<float>("g");
@@ -34,7 +35,7 @@ namespace Editor.Drawers
     [DrawAtribute("Route")]
     public class RouteDrawer : IValueDrawer<XtStructValue>
     {
-        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
+        public bool DrawValue(Project project, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var name = value.GetField<string>("Name");
 
@@ -45,7 +46,7 @@ namespace Editor.Drawers
     [DrawAtribute("City")]
     public class CityDrawer : IValueDrawer<XtStructValue>
     {
-        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
+        public bool DrawValue(Project project, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var name = value.GetField<string>("Name");
 

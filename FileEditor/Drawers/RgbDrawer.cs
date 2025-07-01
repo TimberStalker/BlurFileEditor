@@ -1,4 +1,5 @@
 ﻿using BlurFileFormats.FlaskReflection;
+using Editor.Projects;
 using ImGuiNET;
 
 namespace Editor.Drawers
@@ -6,7 +7,7 @@ namespace Editor.Drawers
     [DrawAtribute("Rgb")]
     public class RgbDrawer : IValueDrawer<XtStructValue>
     {
-        public bool DrawValue(XtDatabase xtDb, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
+        public bool DrawValue(Project project, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             var rValue = value.GetField<float>("r");
             var gValue = value.GetField<float>("g");
