@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using BlurFileFormats.FlaskReflection;
+﻿using BlurFileFormats.FlaskReflection;
+using Bufdio;
 using Editor.Rendering;
 using Editor.Windows;
 using Editor.Windows.Popups;
@@ -13,6 +7,13 @@ using ImGuiNET;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.ObjectPool;
 using Pango;
+using System;
+using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using static Editor.Rendering.GL;
 using ImGuiController = Editor.Rendering.IMGUI.ImGuiController;
 
@@ -66,8 +67,12 @@ namespace Editor
         }
         static MainWindow mainGuiWindow = new();
         static void Main(string[] _args) {
-            SynchronizationContext.SetSynchronizationContext(synchronizationContext = new SynchronizationContext());
 
+            BufdioLib.InitializePortAudio(Path.Combine(Environment.CurrentDirectory, "libs\\PortAudio\\Windows\\libportaudio.dll"));
+            //BufdioLib.InitializeFFmpeg();
+
+            SynchronizationContext.SetSynchronizationContext(synchronizationContext = new SynchronizationContext());
+            
             WindowCreationProps _winProps = new WindowCreationProps() {
                 Title = "BLUR FILE EDITOR",
                 IsResizable = true,
@@ -81,7 +86,6 @@ namespace Editor
                 mainGuiWindow.Draw(Window.Instance.WindowSize);
                 ImGui.ShowDemoWindow();
             };
-
             _window.Loop();
         }
     }

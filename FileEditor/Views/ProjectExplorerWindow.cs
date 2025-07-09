@@ -93,7 +93,7 @@ public class FileSystemObject
         FilePath = path;
         Icon = icon;
         var attributes = File.GetAttributes(path);
-        if(!attributes.HasFlag(FileAttributes.Directory))
+        if (!attributes.HasFlag(FileAttributes.Directory))
         {
             Contents = [];
         }

@@ -1,5 +1,7 @@
-﻿using Editor.Projects;
+﻿using BlurFileFormats.Audio;
+using Editor.Projects;
 using Editor.Views;
+using Editor.Views.Dynamic;
 using Editor.Windows.Popups;
 using ImGuiNET;
 using Pango;
@@ -164,6 +166,11 @@ public class MainWindow
                     if (xtDatabase is null) return;
                     XtEditorWindow xtEditor = new(filePath, xtDatabase, project);
                     AddDynamicView(xtEditor);
+                    break;
+                case ".baf":
+                    var baf = Baf.Parse(filePath);
+                    BafEditorWindow bafEditor = new(filePath, baf);
+                    AddDynamicView(bafEditor);
                     break;
             }
         } catch(Exception ex)

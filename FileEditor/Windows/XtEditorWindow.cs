@@ -17,10 +17,10 @@ using Pango;
 
 public class XtEditorWindow : IDynamicView
 {
-    string File { get; }
+    public string File { get; }
     public XtDatabase LocalDatabase { get; }
     public Project Project { get; }
-    string Name { get; }
+    public string Name { get; }
 
 
 
@@ -28,8 +28,6 @@ public class XtEditorWindow : IDynamicView
     int changeCount = 0;
     UndoCommandListBuffer commandBuffer = new();
     HistoryQueue<UndoCommand> CommandHistory { get; } = new(128);
-
-    string IDynamicView.Name => Name;
 
     string IDynamicView.Id => File;
 
@@ -52,7 +50,6 @@ public class XtEditorWindow : IDynamicView
         }
         if (ImGui.Begin($"{Name}###{File}", ref open, flags))
         {
-
             if(ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows))
             {
                 if(ImGui.IsKeyDown(ImGuiKey.ModCtrl))
