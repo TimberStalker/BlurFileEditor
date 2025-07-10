@@ -46,9 +46,9 @@ public class BafEditorWindow : IDynamicView
                     {
                         try
                         {
-                            var options = new AudioEngineOptions(track.ChannelCount * Math.Max(track.TrackCount, 1), (int)track.SampleRate);
+                            var options = new AudioEngineOptions(track.ChannelCount, (int)track.SampleRate);
                             using var engine = new PortAudioEngine(options);
-                            engine.Send(track.AudioStream.Select(c => c / (float)byte.MaxValue * short.MaxValue).ToArray());
+                            engine.Send(track.AudioStream);
                             await Task.Delay(2000);
                             ;
                         }
