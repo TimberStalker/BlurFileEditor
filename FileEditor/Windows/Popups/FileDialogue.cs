@@ -183,56 +183,57 @@ namespace Editor.Windows.Popups
 
         private static void FileDisplay(ref FileDialogueState state, Action<FileSystemInfo> HandleInput)
         {
-            ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowViewport().Size.X, ImGui.GetWindowHeight() - 85));
-
-            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
-
-            ImGui.Columns(4);
-            ImGui.Text("Name");
-            ImGui.NextColumn();
-            ImGui.Text("Date Modified");
-            ImGui.NextColumn();
-            ImGui.Text("Type");
-            ImGui.NextColumn();
-            ImGui.Text("Size");
-            ImGui.NextColumn();
-
-            ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
-            foreach (var item in state.fileSystemEntries)
+            if(ImGui.BeginChild("fileDisplay", new Vector2(ImGui.GetWindowViewport().Size.X, ImGui.GetWindowHeight() - 85)))
             {
-                ImGui.Spacing();
-                var info = item.SystemInfo;
-                if (item.Texture is not null)
-                {
-                    ImGui.Image(item.Texture, new Vector2(20, 20));
-                    ImGui.SameLine();
-                }
-                if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowOverlap, new Vector2(0, 20)))
-                {
-                    state.selectedFile = info.Name;
-                }
-                if (ImGui.IsItemHovered())
-                {
-                    HandleInput(info);
-                }
+                ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
 
+                ImGui.Columns(4);
+                ImGui.Text("Name");
                 ImGui.NextColumn();
-                ImGui.AlignTextToFramePadding();
-                ImGui.Text(info.LastWriteTime.ToString());
+                ImGui.Text("Date Modified");
                 ImGui.NextColumn();
-                ImGui.AlignTextToFramePadding();
                 ImGui.Text("Type");
                 ImGui.NextColumn();
-                ImGui.AlignTextToFramePadding();
                 ImGui.Text("Size");
                 ImGui.NextColumn();
+
+                ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.0f, 0.5f));
+                foreach (var item in state.fileSystemEntries)
+                {
+                    ImGui.Spacing();
+                    var info = item.SystemInfo;
+                    if (item.Texture is not null)
+                    {
+                        ImGui.Image(item.Texture, new Vector2(20, 20));
+                        ImGui.SameLine();
+                    }
+                    if (ImGui.Selectable(info.Name, state.selectedFile == info.Name, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowOverlap, new Vector2(0, 20)))
+                    {
+                        state.selectedFile = info.Name;
+                    }
+                    if (ImGui.IsItemHovered())
+                    {
+                        HandleInput(info);
+                    }
+
+                    ImGui.NextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.Text(info.LastWriteTime.ToString());
+                    ImGui.NextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.Text("Type");
+                    ImGui.NextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.Text("Size");
+                    ImGui.NextColumn();
+                }
+                ImGui.PopStyleVar();
+                ImGui.Columns(1);
+
+                ImGui.PopStyleVar();
+
             }
-            ImGui.PopStyleVar();
-            ImGui.Columns(1);
-
-            ImGui.PopStyleVar();
-
-            ImGui.EndChild();
+                ImGui.EndChild();
         }
 
         private static void Breadcrumb(ref FileDialogueState state)

@@ -1,13 +1,15 @@
-﻿using BlurFileFormats.FlaskReflection;
-using Editor.Projects;
-using ImGuiNET;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
-using static XtEditorWindow;
+using BlurFileFormats.FlaskReflection;
+using Editor.Projects;
+using Gdk;
+using ImGuiNET;
+using Pango;
+using static XtEditorView;
 namespace Editor.Drawers
 {
     [RequiresUnreferencedCode("Needs access to reflection to load drawers.")]
@@ -118,7 +120,15 @@ namespace Editor.Drawers
         public static void DrawXtItem(Project project, IXtValueItem item, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             bool showContent = DrawHeader(project, item, reference, enabled);
-
+            if (item.Value is XtHandleValue { Handle: uint beginHandle })
+            {
+                if (ImGui.BeginPopupContextItem($"itemContext{item.GetHashCode()}"))
+                {
+                    ImGui.MenuItem($"Original File: {project.Flask.GetRecordSourceFile(beginHandle)}", false);
+                    ImGui.Separator();
+                    ImGui.EndPopup();
+                }
+            }
             if (item is XtArrayItem v)
             {
                 if (ImGui.BeginPopupContextItem($"itemContext{item.GetHashCode()}"))
@@ -138,8 +148,6 @@ namespace Editor.Drawers
                 case XtHandleValue handle:
                     if (ImGui.BeginPopupContextItem($"itemContext{item.GetHashCode()}"))
                     {
-                        ImGui.MenuItem("Original File", false);
-                        ImGui.Separator();
                         if (ImGui.MenuItem("Clear", enabled))
                         {
                             commandBuffer.Add(handle, null, handle.Handle, (h, v) => h.Handle = v);
@@ -465,32 +473,34 @@ namespace Editor.Drawers
                         }
                         if (ImGui.BeginPopup("usePop"))
                         {
-                            ImGui.BeginChild("usePopScroll", new Vector2(600, 200), ImGuiChildFlags.None, ImGuiWindowFlags.AlwaysAutoResize);
-                            foreach (var heapValue in reference.RefHeap.Where(t => t.Type == v.Type.BaseType || (t.Type is XtStructType st && v.Type.BaseType is XtStructType pt && st.IsOfType(pt))))
+                            if(ImGui.BeginChild("usePopScroll", new Vector2(600, 200)))
                             {
-                                bool showContent = false;
-                                if (HasContent(project, heapValue))
+                                foreach (var heapValue in reference.RefHeap.Where(t => t.Type == v.Type.BaseType || (t.Type is XtStructType st && v.Type.BaseType is XtStructType pt && st.IsOfType(pt))))
                                 {
-                                    showContent = ImGui.TreeNodeEx($"({heapValue.Type}){heapValue.GetHashCode()}", ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
+                                    bool showContent = false;
+                                    if (HasContent(project, heapValue))
+                                    {
+                                        showContent = ImGui.TreeNodeEx($"({heapValue.Type}){heapValue.GetHashCode()}", ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
+                                    }
+                                    else
+                                    {
+                                        showContent = ImGui.TreeNodeEx($"({heapValue.Type}){heapValue.GetHashCode()}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
+                                    }
+                                    ImGui.SameLine();
+                                    if (ImGui.Button("add"))
+                                    {
+                                        commandBuffer.Add((target: v, item: heapValue),
+                                            b => b.target.Value = b.item,
+                                            b => b.target.Value = null);
+                                    }
+                                    if (showContent)
+                                    {
+                                        DrawContent(project, heapValue, reference, commandBuffer, enabled);
+                                        ImGui.TreePop();
+                                    }
                                 }
-                                else
-                                {
-                                    showContent = ImGui.TreeNodeEx($"({heapValue.Type}){heapValue.GetHashCode()}", ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowOverlap);
-                                }
-                                ImGui.SameLine();
-                                if (ImGui.Button("add"))
-                                {
-                                    commandBuffer.Add((target: v, item: heapValue),
-                                        b => b.target.Value = b.item,
-                                        b => b.target.Value = null);
-                                }
-                                if (showContent)
-                                {
-                                    DrawContent(project, heapValue, reference, commandBuffer, enabled);
-                                    ImGui.TreePop();
-                                }
+                                ImGui.EndChild();
                             }
-                            ImGui.EndChild();
                             ImGui.EndPopup();
                         }
                     }
@@ -504,14 +514,9 @@ namespace Editor.Drawers
                     ImGui.SetNextItemWidth(80);
                     if (v.Handle is null)
                     {
-                        if (ImGui.Button("new", new Vector2(80, 0)))
-                        {
-
-                        }
-                        ImGui.SameLine(0, 5);
                         if (ImGui.Button("use", new Vector2(80, 0)))
                         {
-
+                            ImGui.OpenPopup("useHandlePop");
                         }
                     }
                     else
@@ -525,6 +530,7 @@ namespace Editor.Drawers
                             ImGui.Text($"[{v.Handle}] Not Loaded");
                         }
                     }
+                    GetNewRecordPopup(project, commandBuffer, v);
                     break;
                 case XtArrayValue v:
 
@@ -561,6 +567,32 @@ namespace Editor.Drawers
                     break;
             }
         }
+
+        private static unsafe void GetNewRecordPopup(Project project, ICommandBuffer commandBuffer, XtHandleValue v)
+        {
+            if (ImGui.BeginPopup("useHandlePop"))
+            {
+                if (ImGui.BeginListBox("##handleListBox", new Vector2(600, 400)))
+                {
+                    foreach (var (handle, record) in project.Flask.GlobalXtDatabase.Refs.Where(r => r.Value.Type.IsOfType(v.Type.BaseType)))
+                    {
+                        ImGui.PushID(handle.GetHashCode());
+                        if (ImGui.Button("use"))
+                        {
+                            commandBuffer.Add(v, handle, v.Handle, (r, v) => r.Handle = v);
+                        }
+                        ImGui.SameLine();
+                        ImGui.BeginDisabled();
+                        DrawXtItem(project, new XtRefItem(handle, record), record, commandBuffer, false);
+                        ImGui.EndDisabled();
+                        ImGui.PopID();
+                    }
+                    ImGui.EndListBox();
+                }
+                ImGui.EndPopup();
+            }
+        }
+
         static bool MultiCombo(string label, ref uint flags, IEnumerable<string> flagNames)
         {
             string text = "";

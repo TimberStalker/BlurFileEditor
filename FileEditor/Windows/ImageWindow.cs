@@ -33,8 +33,8 @@ public class ImageWindow : GuiWindow, IDisposable
             var size = ImGui.GetWindowSize();
             var minSize = MathF.Min(size.X, size.Y);
             ImGui.Image(texture, new System.Numerics.Vector2(minSize, minSize));
-            ImGui.End();
         }
+            ImGui.End();
         return open;
     }
 
@@ -77,10 +77,13 @@ public class DirectXImageWindow : GuiWindow, IDisposable
         if (ImGui.Begin($"{Path.GetFileName(TexturePath)}##{TexturePath}", ref open, ImGuiWindowFlags.NoCollapse))
         {
             var size = ImGui.GetWindowSize();
-            ImGui.BeginChild(2, size - new Vector2(20, 40), ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-            Display.Draw();
-            ImGui.End();
+            if(ImGui.BeginChild(2, size - new Vector2(20, 40), ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
+            {
+                Display.Draw();
+            }
+                ImGui.EndChild();
         }
+            ImGui.End();
         return open;
     }
 
@@ -111,44 +114,46 @@ public class DirectXImageWindow : GuiWindow, IDisposable
         Vector2 halfPadding = new Vector2(10, 10);
         public void Draw()
         {
-            ImGui.BeginChild("container", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-
-            var size = ImGui.GetWindowSize();
-            var minSize = MathF.Max(MathF.Min(size.X, size.Y) - 60, 80);
-
-            Vector2 offset = new Vector2(size.X / 2, size.Y / 2);
-
-            var cursorScreenPos = ImGui.GetCursorScreenPos();
-            if (ImGui.IsWindowHovered())
+            if(ImGui.BeginChild("container", Vector2.Zero, ImGuiChildFlags.None, ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
             {
-                scale += ImGui.GetIO().MouseWheel / 4;
+                var size = ImGui.GetWindowSize();
+                var minSize = MathF.Max(MathF.Min(size.X, size.Y) - 60, 80);
 
-                if(ImGui.IsMouseDown(ImGuiMouseButton.Middle))
+                Vector2 offset = new Vector2(size.X / 2, size.Y / 2);
+
+                var cursorScreenPos = ImGui.GetCursorScreenPos();
+                if (ImGui.IsWindowHovered())
                 {
-                    var delta = ImGui.GetIO().MouseDelta;
-                    ImGui.SetScrollX(ImGui.GetScrollX() - delta.X);
-                    ImGui.SetScrollY(ImGui.GetScrollY() - delta.Y);
+                    scale += ImGui.GetIO().MouseWheel / 4;
+
+                    if(ImGui.IsMouseDown(ImGuiMouseButton.Middle))
+                    {
+                        var delta = ImGui.GetIO().MouseDelta;
+                        ImGui.SetScrollX(ImGui.GetScrollX() - delta.X);
+                        ImGui.SetScrollY(ImGui.GetScrollY() - delta.Y);
+                    }
                 }
-            }
 
-            int width = texture.Width;
-            int height = texture.Height;
+                int width = texture.Width;
+                int height = texture.Height;
 
-            if (width >= height)
-            {
-                float scale = minSize / width;
-                width = (int)minSize;
-                height = (int)(height * scale);
-            }
-            else
-            {
-                float scale = minSize / height;
-                height = (int)minSize;
-                width = (int)(width * scale);
-            }
+                if (width >= height)
+                {
+                    float scale = minSize / width;
+                    width = (int)minSize;
+                    height = (int)(height * scale);
+                }
+                else
+                {
+                    float scale = minSize / height;
+                    height = (int)minSize;
+                    width = (int)(width * scale);
+                }
 
-            ImGui.Image(texture, new Vector2(width, height) * MathF.Exp(scale));
-            ImGui.EndChild();
+                ImGui.Image(texture, new Vector2(width, height) * MathF.Exp(scale));
+            }
+                ImGui.EndChild();
+
         }
 
         public void Dispose()
@@ -216,80 +221,82 @@ public class DirectXImageWindow : GuiWindow, IDisposable
         Vector2 halfPadding = new Vector2(10, 10);
         public void Draw()
         {
-            ImGui.BeginChild("container", Vector2.Zero, ImGuiChildFlags.None);
-            var size = ImGui.GetWindowSize() - padding;
-            if(lastSize != size)
+            if(ImGui.BeginChild("container", Vector2.Zero, ImGuiChildFlags.None))
             {
-                GL.glBindTexture(GL.GL_TEXTURE_2D, renderTexture);
-                GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB, (int)size.X, (int)size.Y, 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, 0);
-                lastSize = size;
-            }
-            var minSize = MathF.Max(MathF.Min(size.X, size.Y) - 60, 80);
-
-            if(ImGui.IsWindowHovered())
-            {
-                if (ImGui.IsMouseDown(ImGuiMouseButton.Middle))
+                var size = ImGui.GetWindowSize() - padding;
+                if(lastSize != size)
                 {
-                    var mouseDrag = ImGui.GetIO().MouseDelta / 6 * standardFov;
-                    yaw -= mouseDrag.X;
-                    pitch -= mouseDrag.Y;
-                    pitch = (float)Math.Clamp(pitch, -90, 90);
-                    //rotation *= Quaternion.CreateFromYawPitchRoll(mouseDrag.X, mouseDrag.Y, 0);
-                    //ImGui.GetIO().WantSetMousePos = true;
-                    //ImGui.GetIO().MousePos = ImGui.GetIO().MousePosPrev;
+                    GL.glBindTexture(GL.GL_TEXTURE_2D, renderTexture);
+                    GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB, (int)size.X, (int)size.Y, 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, 0);
+                    lastSize = size;
                 }
-                fov += (ImGui.GetIO().MouseWheel / 50);
-                fov = Math.Clamp(fov, 0.1f, 3.13f);
+                var minSize = MathF.Max(MathF.Min(size.X, size.Y) - 60, 80);
+
+                if(ImGui.IsWindowHovered())
+                {
+                    if (ImGui.IsMouseDown(ImGuiMouseButton.Middle))
+                    {
+                        var mouseDrag = ImGui.GetIO().MouseDelta / 6 * standardFov;
+                        yaw -= mouseDrag.X;
+                        pitch -= mouseDrag.Y;
+                        pitch = (float)Math.Clamp(pitch, -90, 90);
+                        //rotation *= Quaternion.CreateFromYawPitchRoll(mouseDrag.X, mouseDrag.Y, 0);
+                        //ImGui.GetIO().WantSetMousePos = true;
+                        //ImGui.GetIO().MousePos = ImGui.GetIO().MousePosPrev;
+                    }
+                    fov += (ImGui.GetIO().MouseWheel / 50);
+                    fov = Math.Clamp(fov, 0.1f, 3.13f);
+                }
+
+                var drawList = ImGui.GetWindowDrawList();
+
+                int width = texture.Width;
+                int height = texture.Height;
+
+                if (width >= height)
+                {
+                    float scale = minSize / width;
+                    width = (int)minSize;
+                    height = (int)(height * scale);
+                }
+                else
+                {
+                    float scale = minSize / height;
+                    height = (int)minSize;
+                    width = (int)(width * scale);
+                }
+                var pitchQuat = Quaternion.CreateFromYawPitchRoll(0, pitch * MathF.PI / 180, 0);
+                var rotation = pitchQuat * Quaternion.CreateFromYawPitchRoll(yaw * MathF.PI / 180, 0, 0);
+            
+                var viewMatrix = Matrix4x4.CreateFromQuaternion(rotation);
+                var perspective = Matrix4x4.CreatePerspectiveFieldOfView(fov, size.X/size.Y, 0.1f, 100f);
+            
+            
+                GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, frameBuffer);
+                GL.glClipControl(GL.GL_LOWER_LEFT, GL.GL_NEGATIVE_ONE_TO_ONE);
+                GL.glActiveTexture(GL.GL_TEXTURE0);
+                GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, texture);
+                shader.Use();
+                shader.SetMatrix("projection", perspective);
+                shader.SetMatrix("view", viewMatrix);
+                shader.SetInt("skybox", 0);
+            
+                GL.glBindVertexArray(vao);
+            
+                GL.glDisable(GL.GL_DEPTH_TEST);
+                GL.glViewport(0, 0, (int)size.X, (int)size.Y);
+                GL.glClearColor(0, 0, 0, 1);
+                GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+                GL.glDrawArrays(GL.GL_TRIANGLES, 0, 36);
+            
+                GL.glUseProgram(0);
+                GL.glBindVertexArray(0);
+                GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
+
+                ImGui.SetCursorPos(halfPadding);
+                ImGui.Image(renderTexture, new Vector2(size.X, size.Y));
+                ImGui.EndChild();
             }
-
-            var drawList = ImGui.GetWindowDrawList();
-
-            int width = texture.Width;
-            int height = texture.Height;
-
-            if (width >= height)
-            {
-                float scale = minSize / width;
-                width = (int)minSize;
-                height = (int)(height * scale);
-            }
-            else
-            {
-                float scale = minSize / height;
-                height = (int)minSize;
-                width = (int)(width * scale);
-            }
-            var pitchQuat = Quaternion.CreateFromYawPitchRoll(0, pitch * MathF.PI / 180, 0);
-            var rotation = pitchQuat * Quaternion.CreateFromYawPitchRoll(yaw * MathF.PI / 180, 0, 0);
-            
-            var viewMatrix = Matrix4x4.CreateFromQuaternion(rotation);
-            var perspective = Matrix4x4.CreatePerspectiveFieldOfView(fov, size.X/size.Y, 0.1f, 100f);
-            
-            
-            GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, frameBuffer);
-            GL.glClipControl(GL.GL_LOWER_LEFT, GL.GL_NEGATIVE_ONE_TO_ONE);
-            GL.glActiveTexture(GL.GL_TEXTURE0);
-            GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, texture);
-            shader.Use();
-            shader.SetMatrix("projection", perspective);
-            shader.SetMatrix("view", viewMatrix);
-            shader.SetInt("skybox", 0);
-            
-            GL.glBindVertexArray(vao);
-            
-            GL.glDisable(GL.GL_DEPTH_TEST);
-            GL.glViewport(0, 0, (int)size.X, (int)size.Y);
-            GL.glClearColor(0, 0, 0, 1);
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
-            GL.glDrawArrays(GL.GL_TRIANGLES, 0, 36);
-            
-            GL.glUseProgram(0);
-            GL.glBindVertexArray(0);
-            GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
-
-            ImGui.SetCursorPos(halfPadding);
-            ImGui.Image(renderTexture, new Vector2(size.X, size.Y));
-            ImGui.EndChild();
         }
 
         public void Dispose()

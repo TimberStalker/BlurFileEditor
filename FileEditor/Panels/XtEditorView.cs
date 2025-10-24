@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml.Linq;
@@ -15,7 +16,7 @@ using GLib;
 using ImGuiNET;
 using Pango;
 
-public class XtEditorWindow : IDynamicView
+public class XtEditorView : IDynamicView
 {
     public string File { get; }
     public XtDatabase LocalDatabase { get; }
@@ -32,8 +33,9 @@ public class XtEditorWindow : IDynamicView
     string IDynamicView.Id => File;
 
     string? IDynamicView.Shortcut => null;
-
-    public XtEditorWindow(string file, XtDatabase localDatabase, Project project)
+    string searchText = "";
+    uint? createdHandle;
+    public XtEditorView(string file, XtDatabase localDatabase, Project project)
     {
         File = file;
         LocalDatabase = localDatabase;
@@ -93,14 +95,74 @@ public class XtEditorWindow : IDynamicView
             {
                 refs[index++] = new XtRefItem(id, xtRef);
             }
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text("Search");
+            ImGui.SameLine();
 
-            for (int i = 0; i < size; i++)
+            Vector2 textSize = ImGui.CalcTextSize("Add Record");
+            Vector2 padding = ImGui.GetStyle().FramePadding;
+            float buttonWidth = textSize.X + padding.X * 2.0f;
+            float buttonHeight = textSize.Y + padding.Y * 2.0f;
+
+            float contentRegion = ImGui.GetContentRegionAvail().X - buttonWidth - padding.X;
+            ImGui.SetNextItemWidth(contentRegion);
+            if(ImGui.InputText("##search", ref searchText, 100))
             {
-                XtRefItem item = refs[i];
-                ImGui.PushID(i);
-                XtDrawer.DrawXtItem(Project, item, item.XtRef, commandBuffer, true);
-                ImGui.PopID();
+
             }
+            ImGui.SameLine();
+            if(ImGui.Button("Add Record", new Vector2(buttonWidth, buttonHeight)))
+            {
+                ImGui.OpenPopup("add_record_popup");
+            }
+
+            if(ImGui.BeginPopup("add_record_popup"))
+            {
+                foreach (var item in LocalDatabase.Types)
+                {
+                    if (ImGui.Button(item.Name))
+                    {
+                        uint handle;
+                        do
+                        {
+                            handle = (uint)Random.Shared.NextInt64();
+                        } while (Project.Flask.GlobalXtDatabase.Refs.ContainsKey(handle));
+
+                        XtRef record = new(handle, item.CreateValue());
+                        commandBuffer.Add((global: Project.Flask, file: File,target: LocalDatabase, record: record),
+                            static b =>
+                            {
+                                b.target.Refs.Add(b.record.Handle, b.record);
+                                b.global.AddRecord(b.file, b.record);
+                            },
+                            static b =>
+                            {
+                                b.target.Refs.Remove(b.record.Handle);
+                                b.global.RemoveRecord(b.record);
+                            });
+                        createdHandle = handle;
+                    }
+                }
+                ImGui.EndPopup();
+            }
+
+            if (ImGui.BeginChild("items"))
+            {
+                for (int i = 0; i < size; i++)
+                {
+                    XtRefItem item = refs[i];
+                    if(item.XtRef.Handle == createdHandle)
+                    {
+                        ImGui.SetScrollHereY();
+                        ImGui.SetNextItemOpen(true);
+                        createdHandle = null;
+                    }
+                    ImGui.PushID(i);
+                    XtDrawer.DrawXtItem(Project, item, item.XtRef, commandBuffer, true);
+                    ImGui.PopID();
+                }
+            }
+                ImGui.EndChild();
 
             ArrayPool<XtRefItem>.Shared.Return(refs);
 
@@ -117,8 +179,8 @@ public class XtEditorWindow : IDynamicView
                 commandBuffer.Clear();
             }
 
-            ImGui.End();
         }
+        ImGui.End();
         return open;
     }
 

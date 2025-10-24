@@ -1,8 +1,4 @@
-﻿using BlurFileFormats.FlaskReflection;
-using BlurFileFormats.Localizations;
-using BlurFileFormats.Localizations.Serialization;
-using Pango;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -10,6 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BlurFileFormats.FlaskReflection;
+using BlurFileFormats.Localizations;
+using BlurFileFormats.Localizations.Serialization;
 using Language = BlurFileFormats.Localizations.Language;
 
 namespace Editor.Projects;
@@ -112,6 +111,16 @@ public class FlaskData
             Console.WriteLine($"Failed to load flask file {file}: {ex}");
         }
     });
+    }
+    public void AddRecord(string file, XtRef record)
+    {
+        GlobalXtDatabase.Refs[record.Handle] = record;
+        RecordSourceMappings[record.Handle] = file;
+    }
+    public void RemoveRecord(XtRef record)
+    {
+        GlobalXtDatabase.Refs.Remove(record.Handle);
+        RecordSourceMappings.Remove(record.Handle, out _);
     }
     public async Task<XtDatabase?> GetXtDatabase(string file)
     {

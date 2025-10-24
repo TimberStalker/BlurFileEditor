@@ -32,10 +32,10 @@ public class XtRefGraph : GuiWindow
                     node.Draw();
                 }
                 //ImGui.PopClipRect();
-                ImGui.EndChild();
             }
-            ImGui.End();
+                ImGui.EndChild();
         }
+            ImGui.End();
 
         return isOpen;
     }
@@ -61,8 +61,8 @@ public class XtRefGraph : GuiWindow
             if (ImGui.BeginChild(GetHashCode().ToString(), Vector2.One * 150, ImGuiChildFlags.None, ImGuiWindowFlags.NoTitleBar  | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize))
             {
                 ImGui.Text(Value.ToString());
-                ImGui.EndChild();
             }
+                ImGui.EndChild();
         }
     }
 }

@@ -43,8 +43,8 @@ public class ProjectExplorerWindow : IView, IDisposable
                 DrawFileItem(parentDirectory);
             }
 
-            ImGui.End();
         }
+            ImGui.End();
     }
     public void Focus()
     {

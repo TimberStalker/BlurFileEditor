@@ -1,7 +1,7 @@
 ﻿using BlurFileFormats.Audio;
+using Editor.Panels;
 using Editor.Projects;
 using Editor.Views;
-using Editor.Views.Dynamic;
 using Editor.Windows.Popups;
 using ImGuiNET;
 using Pango;
@@ -164,12 +164,12 @@ public class MainWindow
                 case ".xt":
                     var xtDatabase = await project.Flask.GetXtDatabase(filePath);
                     if (xtDatabase is null) return;
-                    XtEditorWindow xtEditor = new(filePath, xtDatabase, project);
+                    XtEditorView xtEditor = new(filePath, xtDatabase, project);
                     AddDynamicView(xtEditor);
                     break;
                 case ".baf":
                     var baf = Baf.Parse(filePath);
-                    BafEditorWindow bafEditor = new(filePath, baf);
+                    BafEditorView bafEditor = new(filePath, baf);
                     AddDynamicView(bafEditor);
                     break;
             }

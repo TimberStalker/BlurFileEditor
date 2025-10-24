@@ -2,6 +2,7 @@
 using Bufdio;
 using Bufdio.Engines;
 using Bufdio.Players;
+using Editor.Views;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
@@ -11,8 +12,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Editor.Views.Dynamic;
-public class BafEditorWindow : IDynamicView
+namespace Editor.Panels;
+public class BafEditorView : IDynamicView
 {
     public string File { get; }
     public Baf Baf { get; }
@@ -21,7 +22,7 @@ public class BafEditorWindow : IDynamicView
     string IDynamicView.Id => File;
 
     string? IDynamicView.Shortcut => null;
-    public BafEditorWindow(string file, Baf baf)
+    public BafEditorView(string file, Baf baf)
     {
         File = file;
         Baf = baf;
@@ -63,8 +64,8 @@ public class BafEditorWindow : IDynamicView
                 ImGui.PopID();
                 i++;
             }
-            ImGui.End();
         }
+            ImGui.End();
         return open;
     }
 }

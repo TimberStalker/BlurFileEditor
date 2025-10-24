@@ -84,7 +84,7 @@ namespace Editor
 
             _window.OnUpdate += static () => {
                 mainGuiWindow.Draw(Window.Instance.WindowSize);
-                ImGui.ShowDemoWindow();
+                //ImGui.ShowDemoWindow();
             };
             _window.Loop();
         }

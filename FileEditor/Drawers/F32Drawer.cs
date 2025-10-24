@@ -36,10 +36,12 @@ namespace Editor.Drawers
             }
             if (ImGui.BeginPopup("linerFunctionPopup"))
             {
-                ImGui.BeginChild("linerFunctionPopupScroll", new Vector2(600, 200));
-
+                if(ImGui.BeginChild("linerFunctionPopupScroll", new Vector2(600, 200)))
+                {
 
                 ImGui.EndChild();
+                }
+
 
                 ImGui.EndPopup();
             }
