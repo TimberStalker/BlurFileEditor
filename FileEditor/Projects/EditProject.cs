@@ -153,7 +153,7 @@ public class LocData
     public ConcurrentBag<Language> Languages { get; } = [];
 
     ConcurrentDictionary<string, Task<Localization>> ScopedLocalizations { get; } = [];
-    ConcurrentDictionary<uint, Text> TextMappings { get; } = [];
+    public ConcurrentDictionary<uint, Text> TextMappings { get; } = [];
     Project Project { get; }
 
     public LocData(Project project)

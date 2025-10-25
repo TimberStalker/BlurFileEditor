@@ -259,6 +259,7 @@ namespace Editor.Drawers
                 }
             }
         }
+        static string locSearch = "";
         public static unsafe void DrawValue(Project project, IXtValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
         {
             ImGui.SameLine(0, 10);
@@ -399,14 +400,53 @@ namespace Editor.Drawers
                 }
                 case XtAtomValue<LocId> v:
                 {
-                    ImGui.PushItemWidth(460);
                     uint edit = v.Value;
-                    if (ImGui.InputScalar($"##locid{v.GetHashCode()}", ImGuiDataType.U32, (nint)(&edit)))
-                    {
-                        commandBuffer.Add(v, (LocId)edit, v.Value, (t, value) => t.Value = value);
-                    }
+                    //ImGui.SetNextItemWidth(120);
 
-                    ImGui.PopItemWidth();
+                    //if (ImGui.InputScalar($"##locid{v.GetHashCode()}", ImGuiDataType.U32, (nint)(&edit)))
+                    //{
+                    //    commandBuffer.Add(v, (LocId)edit, v.Value, (t, value) => t.Value = value);
+                    //}
+                    //ImGui.SameLine();
+                    ImGui.SetNextItemWidth(160);
+                    BlurFileFormats.Localizations.Text? text = project.Localizations.GetText(v.Value);
+
+                    if(ImGui.BeginCombo("##locLabel", text?.Header ?? "", ImGuiComboFlags.HeightLarge))
+                    {
+                        static string TruncateWithEllipsis(string value, int maxLength)
+                        {
+                            const string ellipsis = "...";
+                            if (string.IsNullOrEmpty(value) || maxLength <= ellipsis.Length)
+                                return value;
+
+                            return value.Length > maxLength
+                            ? value.Substring(0, maxLength - ellipsis.Length) + ellipsis
+                            : value;
+                        }
+                        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                        ImGui.InputText("##searchLoc", ref locSearch, 100);
+                        ImGui.BeginChild("locSearchScroll", new Vector2(600, 200));
+
+                        foreach (var (handle, item) in project.Localizations.TextMappings.Where(t => t.Value.Header.Contains(locSearch, StringComparison.InvariantCultureIgnoreCase) || t.Value.TextItems.Any(i => i.Value.Contains(locSearch, StringComparison.InvariantCultureIgnoreCase))))
+                        {
+                            if (ImGui.Selectable($"{item.Header} - \"{TruncateWithEllipsis(item.TextItems.FirstOrDefault(t => t.Language.Name == "en")?.Value ?? "", 24)}\"", handle == v.Value, ImGuiSelectableFlags.None, new Vector2()))
+                            {
+                                commandBuffer.Add(v, (LocId)handle, v.Value, (t, value) => t.Value = value);
+                                locSearch = "";
+                            }
+                        }
+
+                        ImGui.EndChild();
+                        ImGui.EndCombo();
+                    }
+                    ImGui.SameLine();
+                    
+                    ImGui.Text("\"");
+                    ImGui.SameLine(0, 0);
+                    ImGui.SetNextItemWidth(160);
+                    ImGui.Text(text?.TextItems.FirstOrDefault(t => t.Language.Name == "en")?.Value ?? "");
+                    ImGui.SameLine(0, 0);
+                    ImGui.Text("\"");
                     break;
                 }
                 case XtEnumValue v:
