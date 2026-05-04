@@ -1,93 +1,51 @@
-﻿using System.Drawing;
+﻿using System.Data.Common;
+using System.Diagnostics;
+using System.Drawing;
 using System.Drawing.Imaging;
+using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Threading;
 using Editor;
-using Editor.Rendering;
+using GLib;
+using Hexa.NET.ImGui;
+using Hexa.NET.OpenGL;
 using SkiaSharp;
+using static OpenGL;
 
 namespace Editor.OpenGL;
-public class CubemapTexture : IDisposable
+public class CubemapTexture : GLObject
 {
-    uint handle;
-    bool setPixels;
-
-    public int Width
+    public CubemapTexture() : base(GL3.GenTexture())
     {
-        get
-        {
-            GL.glGetTextureLevelParameteriv(handle, 0, GL.GL_TEXTURE_WIDTH, out var width);
-            return width;
-        }
-    }
-    public int Height
-    {
-        get
-        {
-            GL.glGetTextureLevelParameteriv(handle, 0, GL.GL_TEXTURE_HEIGHT, out var height);
-            return height;
-        }
-    }
-
-    public CubemapTexture()
-    {
-        GL.glGenTextures(1, out handle);
-    }
-    public void SetParameter(uint parameter, int value)
-    {
-        GL.glTextureParameteri(handle, parameter, value);
-    }
-    public void SetParameter(uint parameter, float value)
-    {
-        GL.glTextureParameterf(handle, parameter, value);
     }
 
 
     public static CubemapTexture CreateFromBitmaps(SKBitmap[] bitmaps)
     {
-        if (bitmaps.Length != 6) throw new NotSupportedException();
-        var texture = new CubemapTexture();
-        GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, texture);
-        texture.SetParameter(GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-        texture.SetParameter(GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-        texture.SetParameter(GL.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
-        texture.SetParameter(GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-        texture.SetParameter(GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+        Debug.Assert(bitmaps != null);
+        Debug.Assert(bitmaps.Length != 6);
 
-        for (int i = 0; i < bitmaps.Length; i++)
+        var texture = new CubemapTexture();
+
+        using (var tex = texture.Bind())
         {
-            SKBitmap? item = bitmaps[i];
-            texture.SetBits((uint)(GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i), item);
+            tex.WrapS = GLTextureWrapMode.ClampToEdge;
+            tex.WrapT = GLTextureWrapMode.ClampToEdge;
+            tex.WrapR = GLTextureWrapMode.ClampToEdge;
+
+            tex.MinFilter = GLTextureMinFilter.Linear;
+            tex.MagFilter = GLTextureMagFilter.Linear;
+
+            for (uint i = 0; i < bitmaps.Length; i++)
+            {
+                SKBitmap? item = bitmaps[i];
+                tex.SetBits(i, item);
+            }
         }
+
 
         return texture;
-    }
-    public void SetBits(uint face, SKBitmap bitmap)
-    {
-        GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, handle);
-        unsafe
-        {
-            using var destBimap = new SKBitmap(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-            bitmap.CopyTo(destBimap, SKColorType.Bgra8888);
-            //if (!setPixels)
-            //{
-            GL.glTexImage2D(face, 0, GL.GL_RGBA32F, destBimap.Width, destBimap.Height, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, destBimap.GetPixels());
-                //setPixels = true;
-            //}
-            //else
-            //{
-            //    GL.glTexSubImage2D(face, 0, GL.GL_RGBA32F, destBimap.Width, destBimap.Height, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, destBimap.GetPixels());
-            //}
-            GL.glGenerateMipmap(GL.GL_TEXTURE_2D);
-        }
-    }
-
-    public static implicit operator uint(CubemapTexture texture)
-    {
-        return texture.handle;
-    }
-    public static implicit operator nint(CubemapTexture texture)
-    {
-        return (nint)texture.handle;
     }
 
     bool disposed;
@@ -99,22 +57,101 @@ public class CubemapTexture : IDisposable
         {
 
         }
-        unsafe
-        {
-            GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, 0);
-            fixed (uint* ptr = &handle)
-            {
-                GL.glDeleteTextures(1, (uint)&ptr);
-            }
-        }
+        GL3.DeleteTexture(Handle);
     }
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
-    ~CubemapTexture()
+    public static implicit operator ImTextureID(CubemapTexture texture) => (ImTextureID)texture.Handle;
+    public unsafe static implicit operator ImTextureRef(CubemapTexture texture) => new(texId: texture);
+    public CubemapTextureReference Bind(bool restoreAfterUsing = true)
     {
-        Program.ExecuteOnMainThread(Dispose, false);
+        return new CubemapTextureReference(Handle, restoreAfterUsing);
+    }
+}
+
+public ref struct CubemapTextureReference
+{
+    uint lastHandle;
+    public readonly int Width
+    {
+        get
+        {
+            GL3.GetTexLevelParameteriv(GLTextureTarget.CubeMap, 0, GLGetTextureParameter.Width, out var width);
+            return width;
+        }
+    }
+    public readonly int Height
+    {
+        get
+        {
+            GL3.GetTexLevelParameteriv(GLTextureTarget.CubeMap, 0, GLGetTextureParameter.Height, out var height);
+            return height;
+        }
+    }
+    public readonly GLTextureWrapMode WrapS
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.CubeMap, GLTextureParameterName.WrapS, (int)value);
+        }
+    }
+    public readonly GLTextureWrapMode WrapT
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.CubeMap, GLTextureParameterName.WrapT, (int)value);
+        }
+    }
+    public readonly GLTextureWrapMode WrapR
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.CubeMap, GLTextureParameterName.WrapT, (int)value);
+        }
+    }
+    public readonly GLTextureMinFilter MinFilter
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.CubeMap, GLTextureParameterName.MinFilter, (int)value);
+        }
+    }
+    public readonly GLTextureMagFilter MagFilter
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.CubeMap, GLTextureParameterName.MagFilter, (int)value);
+        }
+    }
+
+    public readonly void SetBits(uint face, SKBitmap bitmap, bool generateMipmap = true)
+    {
+        using var destBimap = new SKBitmap(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        bitmap.CopyTo(destBimap, SKColorType.Bgra8888);
+        GL3.TexImage2D(GLTextureTarget.CubeMapPositiveXExt + face, 0, GLInternalFormat.Rgba32F, destBimap.Width, destBimap.Height, 0, GLPixelFormat.Bgra, GLPixelType.UnsignedByte, destBimap.GetPixelSpan());
+
+        if(generateMipmap)
+            GL3.GenerateMipmap(GLTextureTarget.CubeMapPositiveXExt + face);
+    }
+    public CubemapTextureReference(uint handle, bool restoreAfterUsing)
+    {
+        if(restoreAfterUsing)
+        {
+            GL3.GetIntegeri_v(GLGetPName.TextureBindingCubeMap, 0, out var lastHandle);
+            this.lastHandle = (uint)lastHandle;
+        }
+        else
+        {
+            this.lastHandle = uint.MaxValue;
+        }
+        GL3.BindTexture(GLTextureTarget.CubeMap, handle);
+    }
+    public void Dispose()
+    {
+        if(lastHandle != uint.MaxValue)
+        GL3.BindTexture(GLTextureTarget.CubeMap, lastHandle);
     }
 }

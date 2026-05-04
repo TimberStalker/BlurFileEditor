@@ -1,83 +1,18 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
+using System.Reflection.Metadata;
 using System.Runtime.Versioning;
 using Editor;
-using Editor.Rendering;
+using Editor.OpenGL;
+using Hexa.NET.ImGui;
+using Hexa.NET.OpenGL;
 using SkiaSharp;
+using static OpenGL;
 
-public unsafe sealed class Texture2D : IDisposable
+public unsafe sealed class Texture2D : GLObject
 {
-    uint handle;
-    bool setPixels;
-
-    public int Width
+    public Texture2D() : base(GL3.GenTexture())
     {
-        get
-        {
-            GL.glGetTextureLevelParameteriv(handle, 0, GL.GL_TEXTURE_WIDTH, out var width);
-            return width;
-        }
-    }
-    public int Height
-    {
-        get
-        {
-            GL.glGetTextureLevelParameteriv(handle, 0, GL.GL_TEXTURE_HEIGHT, out var height);
-            return height;
-        }
-    }
-
-    public Texture2D()
-    {
-        GL.glGenTextures(1, out handle);
-    }
-    public void SetParameter(uint parameter, int value)
-    {
-        GL.glTextureParameteri(handle, parameter, value);
-    }
-    public void SetParameter(uint parameter, float value)
-    {
-        GL.glTextureParameterf(handle, parameter, value);
-    }
-    public void SetBits(SKBitmap bitmap)
-    {
-        GL.glBindTexture(GL.GL_TEXTURE_2D, handle);
-        unsafe
-        {
-            using var destBimap = new SKBitmap(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-            bitmap.CopyTo(destBimap, SKColorType.Bgra8888);
-            if(!setPixels)
-            {
-                GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32F, destBimap.Width, destBimap.Height, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, destBimap.GetPixels());
-                setPixels = true;
-            }
-            else
-            {
-                GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32F, destBimap.Width, destBimap.Height, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, destBimap.GetPixels());
-            }
-            GL.glGenerateMipmap(GL.GL_TEXTURE_2D);
-        }
-    }
-    [SupportedOSPlatform("windows")]
-    public void SetBits(Bitmap bitmap)
-    {
-        GL.glBindTexture(GL.GL_TEXTURE_2D, handle);
-        unsafe
-        {
-            var bData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-
-            if (!setPixels)
-            {
-                GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32F, bData.Width, bData.Height, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, bData.Scan0);
-                setPixels = true;
-            }
-            else
-            {
-                GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32F, bData.Width, bData.Height, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, bData.Scan0);
-            }
-            GL.glGenerateMipmap(GL.GL_TEXTURE_2D);
-            bitmap.UnlockBits(bData);
-        }
     }
 
     public static Texture2D CreateFromFile(string file)
@@ -96,49 +31,103 @@ public unsafe sealed class Texture2D : IDisposable
     {
         var texture = new Texture2D();
 
-        texture.SetParameter(GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-        texture.SetParameter(GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-        texture.SetParameter(GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-        texture.SetParameter(GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+        using (var tex = texture.Bind())
+        {
+            tex.WrapS = GLTextureWrapMode.ClampToEdge;
+            tex.WrapT = GLTextureWrapMode.ClampToEdge;
+            tex.MinFilter = GLTextureMinFilter.Linear;
+            tex.MagFilter = GLTextureMagFilter.Linear;
 
-        texture.SetBits(bitmap);
+            tex.SetBits(bitmap);
+        }
         return texture;
     }
-
-    public static implicit operator uint(Texture2D texture)
+    protected override void Dispose(bool disposing)
     {
-        return texture.handle;
+        GL3.DeleteTexture(Handle);
     }
-    public static implicit operator nint(Texture2D texture)
+    public static implicit operator ImTextureID(Texture2D texture) => (ImTextureID)texture.Handle;
+    public static implicit operator ImTextureRef(Texture2D texture) => new(texId: texture);
+
+    public Texture2DReference Bind(bool generateMipmap = false)
     {
-        return (nint)texture.handle;
+        return new Texture2DReference(Handle, generateMipmap);
+    }
+}
+
+public ref struct Texture2DReference
+{
+    uint lastHandle;
+    public readonly int Width
+    {
+        get
+        {
+            GL3.GetTexLevelParameteriv(GLTextureTarget.Texture2D, 0, GLGetTextureParameter.Width, out var width);
+            return width;
+        }
+    }
+    public readonly int Height
+    {
+        get
+        {
+            GL3.GetTexLevelParameteriv(GLTextureTarget.Texture2D, 0, GLGetTextureParameter.Height, out var height);
+            return height;
+        }
+    }
+    public readonly GLTextureWrapMode WrapS
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.Texture2D, GLTextureParameterName.WrapS, (int)value);
+        }
+    }
+    public readonly GLTextureWrapMode WrapT
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.Texture2D, GLTextureParameterName.WrapT, (int)value);
+        }
+    }
+    public readonly GLTextureMinFilter MinFilter
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.Texture2D, GLTextureParameterName.MinFilter, (int)value);
+        }
+    }
+    public readonly GLTextureMagFilter MagFilter
+    {
+        set
+        {
+            GL3.TexParameteri(GLTextureTarget.Texture2D, GLTextureParameterName.MagFilter, (int)value);
+        }
     }
 
-    bool disposed;
-    private void Dispose(bool disposing)
+    public readonly void SetBits(SKBitmap bitmap, bool generateMipmap = true)
     {
-        if (disposed) return;
-        disposed = true;
-        if(disposing)
-        {
+        using var destBimap = new SKBitmap(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+        bitmap.CopyTo(destBimap, SKColorType.Bgra8888);
+        GL3.TexImage2D(GLTextureTarget.Texture2D, 0, GLInternalFormat.Rgba32F, destBimap.Width, destBimap.Height, 0, GLPixelFormat.Bgra, GLPixelType.UnsignedByte, destBimap.GetPixelSpan());
 
-        }
-        unsafe
+        if (generateMipmap)
+            GL3.GenerateMipmap(GLTextureTarget.Texture2D);
+    }
+    public Texture2DReference(uint handle, bool restoreAfterUsing)
+    {
+        if (restoreAfterUsing)
         {
-            GL.glBindTexture(GL.GL_TEXTURE_2D, 0);
-            fixed(uint* ptr = &handle)
-            {
-                GL.glDeleteTextures(1, (uint)&ptr);
-            }
+            GL3.GetIntegeri_v(GLGetPName.TextureBinding2D, 0, out var lastHandle);
+            this.lastHandle = (uint)lastHandle;
         }
+        else
+        {
+            this.lastHandle = uint.MaxValue;
+        }
+        GL3.BindTexture(GLTextureTarget.Texture2D, handle);
     }
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-    ~Texture2D()
-    {
-        Program.ExecuteOnMainThread(Dispose, false);
+        if (lastHandle != uint.MaxValue)
+            GL3.BindTexture(GLTextureTarget.Texture2D, lastHandle);
     }
 }

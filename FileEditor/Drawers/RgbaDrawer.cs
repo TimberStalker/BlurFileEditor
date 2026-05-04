@@ -1,6 +1,6 @@
 ﻿using BlurFileFormats.FlaskReflection;
 using Editor.Projects;
-using ImGuiNET;
+using Hexa.NET.ImGui;
 
 namespace Editor.Drawers
 {
@@ -51,6 +51,17 @@ namespace Editor.Drawers
             var name = value.GetField<string>("Name");
 
             ImGui.Text($"(City) {name.Value}");
+            return true;
+        }
+    }
+    [DrawAtribute("UIScreen")]
+    public class UIScreenDrawer : IValueDrawer<XtStructValue>
+    {
+        public bool DrawValue(Project project, XtStructValue value, XtRef reference, ICommandBuffer commandBuffer, bool enabled)
+        {
+            var name = value.GetField<string>("Name");
+
+            ImGui.Text($"(UIScreen) {name.Value}");
             return true;
         }
     }

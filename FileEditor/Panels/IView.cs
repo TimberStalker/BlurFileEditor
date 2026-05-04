@@ -1,10 +1,10 @@
-﻿using ImGuiNET;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Hexa.NET.OpenGL;
 
 namespace Editor.Views;
 internal interface IView
@@ -22,5 +22,5 @@ internal interface IDynamicView
     string Id { get; }
     string? Shortcut { get; }
     
-    bool Draw();
+    bool Draw(GL gl);
 }

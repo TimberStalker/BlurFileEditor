@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Editor.Panels.Views;
-using ImGuiNET;
+using Hexa.NET.ImGui;
 
 namespace Editor.Panels;
 public class Panel

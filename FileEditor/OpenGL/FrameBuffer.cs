@@ -1,85 +1,65 @@
-﻿using Editor.Rendering;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Hexa.NET.OpenGL;
+using SkiaSharp;
+using static OpenGL;
 
 namespace Editor.OpenGL;
-public class FrameBuffer : IDisposable
+public class FrameBuffer : GLObject
 {
-    uint handle;
-    //Bind? bind;
-
-    public FrameBuffer()
+    public FrameBuffer() : base(GL3.GenFramebuffer())
     {
-        GL.glGenFramebuffers(1, out handle);
     }
 
-    public void AttacthTexture(Texture2D texture)
+    protected override void Dispose(bool disposing)
     {
-        //GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, handle);
-        GL.glFramebufferTexture2D(GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0, GL.GL_TEXTURE_2D, texture, 0);
+        GL3.BindTexture(GLTextureTarget.Texture2D, 0);
+        GL3.DeleteTexture(Handle);
     }
-
-    //public Bind Bind()
-    //{
-    //    if(bind is not null) return bind;
-    //}
-
-    public static implicit operator uint(FrameBuffer texture)
+    public FrameBufferReference Bind(bool restoreAfterUsing = true)
     {
-        return texture.handle;
-    }
-    public static implicit operator nint(FrameBuffer texture)
-    {
-        return (nint)texture.handle;
-    }
-
-    bool disposed;
-    private void Dispose(bool disposing)
-    {
-        if (disposed) return;
-        disposed = true;
-        if (disposing)
-        {
-
-        }
-        unsafe
-        {
-            GL.glBindTexture(GL.GL_TEXTURE_2D, 0);
-            fixed (uint* ptr = &handle)
-            {
-                GL.glDeleteTextures(1, (uint)&ptr);
-            }
-        }
-    }
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-    ~FrameBuffer()
-    {
-        Program.ExecuteOnMainThread(Dispose, false);
+        return new FrameBufferReference(Handle, restoreAfterUsing);
     }
 }
 
-public class Bind : IDisposable
+public ref struct FrameBufferReference
 {
-    Action unbind;
+    uint lastReadHandle;
+    uint lastDrawHandle;
 
-    public Bind(Action unbind)
+    public void AttachTexture(GLFramebufferAttachment attachment, Texture2D texture, int mipmapLevel = 0)
     {
-        this.unbind = unbind;
+        GL3.FramebufferTexture2D(GLFramebufferTarget.Framebuffer, attachment, GLTextureTarget.Texture2D, texture, mipmapLevel);
+        if (GL3.CheckFramebufferStatus(GLFramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete)
+        {
+            throw new Exception("Cubemap framebuffer is not complete");
+        }
     }
 
+    public FrameBufferReference(uint handle, bool restoreAfterUsing)
+    {
+        if (restoreAfterUsing)
+        {
+            GL3.GetIntegeri_v(GLGetPName.ReadFramebufferBinding, 0, out var lastReadHandle);
+            this.lastReadHandle = (uint)lastReadHandle;
+            GL3.GetIntegeri_v(GLGetPName.DrawFramebufferBinding, 0, out var lastDrawHandle);
+            this.lastDrawHandle = (uint)lastDrawHandle;
+        }
+        else
+        {
+            this.lastReadHandle = uint.MaxValue;
+            this.lastDrawHandle = uint.MaxValue;
+        }
+        GL3.BindFramebuffer(GLFramebufferTarget.Framebuffer, handle);
+    }
     public void Dispose()
     {
-        unbind();
-    }
-    ~Bind()
-    {
-        throw new Exception("Bind must be disposed manually.");
+        if (lastReadHandle != uint.MaxValue)
+            GL3.BindFramebuffer(GLFramebufferTarget.ReadFramebuffer, lastReadHandle);
+        if (lastDrawHandle != uint.MaxValue)
+            GL3.BindFramebuffer(GLFramebufferTarget.DrawFramebuffer, lastDrawHandle);
     }
 }

@@ -1,5 +1,4 @@
-﻿using Editor.Rendering;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -10,7 +9,11 @@ namespace Editor.OpenGL
 {
     public abstract class GLObject : IDisposable
     {
-        public abstract uint Handle { get; }
+        public uint Handle { get; }
+        protected GLObject(uint handle)
+        {
+            Handle = handle;
+        }
         public static implicit operator uint(GLObject obj)
         {
             return obj.Handle;
@@ -21,7 +24,7 @@ namespace Editor.OpenGL
         }
 
         bool disposed;
-        protected abstract void Dispose(bool disposing);
+        protected virtual void Dispose(bool disposing) { }
         public void Dispose()
         {
             Dispose(true);
@@ -30,8 +33,9 @@ namespace Editor.OpenGL
         }
         ~GLObject()
         {
-            Program.ExecuteOnMainThread(Dispose, false);
-            disposed = true;
+            //Program.ExecuteOnMainThread(Dispose, false);
+            Dispose(false);
+            //disposed = true;
         }
     }
 }

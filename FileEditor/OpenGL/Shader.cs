@@ -1,92 +1,79 @@
-﻿using Editor.Rendering;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
-using static Editor.Rendering.GL;
-
+using Hexa.NET.OpenGL;
+using static OpenGL;
 namespace Editor.OpenGL;
-public class Shader
+public class Shader : GLObject
 {
-    uint handle;
-
-    Shader(uint handle)
+    Shader(uint handle) : base(handle)
     {
-        this.handle = handle;
     }
 
     public void Use()
     {
-        glUseProgram(handle);
+        GL3.UseProgram(Handle);
     }
     public void SetBool(string name, bool value) 
-    {         
-        glUniform1i(glGetUniformLocation(handle, name), value ? 1 : 0);
+    {
+        GL3.Uniform1i(GL3.GetUniformLocation(Handle, name), value ? 1 : 0);
     }
     public void SetInt(string name, in int value) 
-    { 
-        glUniform1i(glGetUniformLocation(handle, name), value); 
+    {
+        GL3.Uniform1i(GL3.GetUniformLocation(Handle, name), value); 
     }
     public void SetFloat(string name, in float value)
-    { 
-        glUniform1f(glGetUniformLocation(handle, name), value); 
-    }
-    public void SetMatrix(string name, in Matrix4x4 value)
     {
-        glUniformMatrix4fv(glGetUniformLocation(handle, name), 1, false, value.M11);
+        GL3.Uniform1f(GL3.GetUniformLocation(Handle, name), value); 
     }
-
-    public static implicit operator uint(Shader texture)
+    public void SetMatrix(string name, Matrix4x4 value)
     {
-        return texture.handle;
-    }
-    public static implicit operator nint(Shader texture)
-    {
-        return (nint)texture.handle;
+        GL3.UniformMatrix4fv(GL3.GetUniformLocation(Handle, name), 1, false, ref value.M11);
     }
 
     public static Shader Create(string path)
     {
-        var vertex = glCreateShader(GL_VERTEX_SHADER);
+        var vertex = GL3.CreateShader(GLShaderType.VertexShader);
         var vertSource = File.ReadAllText(Path.ChangeExtension(path, ".vert"));
-        glShaderSource(vertex, 1, [vertSource], vertSource.Length);
-        glCompileShader(vertex);
+        GL3.ShaderSource(vertex, vertSource);
+        GL3.CompileShader(vertex);
         int success;
-        glGetShaderiv(vertex, GL_COMPILE_STATUS, out success);
+        GL3.GetShaderiv(vertex, GLShaderParameterName.CompileStatus, out success);
         if (success == 0)
         {
-            glGetShaderInfoLog(vertex, 512, out _, out string infoLog);
+            string infoLog = GL3.GetShaderInfoLog(vertex);
             throw new Exception(infoLog);
         };
 
-        var fragment = glCreateShader(GL_FRAGMENT_SHADER);
+        var fragment = GL3.CreateShader(GLShaderType.FragmentShader);
         var fragSource = File.ReadAllText(Path.ChangeExtension(path, ".frag"));
-        glShaderSource(fragment, 1, [fragSource], fragSource.Length);
-        glCompileShader(fragment);
-        glGetShaderiv(fragment, GL_COMPILE_STATUS, out success);
+        GL3.ShaderSource(fragment, fragSource);
+        GL3.CompileShader(fragment);
+        GL3.GetShaderiv(fragment, GLShaderParameterName.CompileStatus, out success);
         if (success == 0)
         {
-            glGetShaderInfoLog(fragment, 512, out _, out string infoLog);
+            string infoLog = GL3.GetShaderInfoLog(fragment);
             throw new Exception(infoLog);
         };
 
-        var id = glCreateProgram();
-        glAttachShader(id, vertex);
-        glAttachShader(id, fragment);
-        glLinkProgram(id);
+        var id = GL3.CreateProgram();
+        GL3.AttachShader(id, vertex);
+        GL3.AttachShader(id, fragment);
+        GL3.LinkProgram(id);
 
-        glGetProgramiv(id, GL_COMPILE_STATUS, out success);
+        GL3.GetProgramiv(id, GLProgramPropertyARB.LinkStatus, out success);
         if (success == 0)
         {
-            glGetProgramInfoLog(vertex, 512, out _, out string infoLog);
+            string infoLog = GL3.GetProgramInfoLog(vertex);
             throw new Exception(infoLog);
         };
 
-        glDeleteShader(vertex);
-        glDeleteShader(fragment);
+        GL3.DeleteShader(vertex);
+        GL3.DeleteShader(fragment);
         return new Shader(id);
     }
 }

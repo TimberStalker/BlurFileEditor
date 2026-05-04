@@ -7,7 +7,7 @@ using System.Text;
 using BlurFileFormats.FlaskReflection;
 using Editor.Projects;
 using Gdk;
-using ImGuiNET;
+using Hexa.NET.ImGui;
 using Pango;
 using static XtEditorView;
 namespace Editor.Drawers
@@ -280,7 +280,7 @@ namespace Editor.Drawers
                 {
                     ImGui.SetNextItemWidth(80);
                     sbyte edit = v.Value;
-                    if (ImGui.InputScalar($"##sbyte{v.GetHashCode()}", ImGuiDataType.S8, (nint)(&edit)))
+                    if (ImGui.InputScalar($"##sbyte{v.GetHashCode()}", ImGuiDataType.S8, &edit))
                     {
                         commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }
@@ -291,7 +291,7 @@ namespace Editor.Drawers
                 {
                     ImGui.SetNextItemWidth(80);
                     short edit = v.Value;
-                    if (ImGui.InputScalar($"##short{v.GetHashCode()}", ImGuiDataType.S16, (nint)(&edit)))
+                    if (ImGui.InputScalar($"##short{v.GetHashCode()}", ImGuiDataType.S16, &edit))
                     {
                         commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }
@@ -302,7 +302,7 @@ namespace Editor.Drawers
                 {
                     ImGui.SetNextItemWidth(80);
                     int edit = v.Value;
-                    if (ImGui.InputScalar($"##int{v.GetHashCode()}", ImGuiDataType.S32, (nint)(&edit)))
+                    if (ImGui.InputScalar($"##int{v.GetHashCode()}", ImGuiDataType.S32, &edit))
                     {
                         commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }
@@ -313,7 +313,7 @@ namespace Editor.Drawers
                 {
                     ImGui.SetNextItemWidth(80);
                     long edit = v.Value;
-                    if (ImGui.InputScalar($"##long{v.GetHashCode()}", ImGuiDataType.S64, (nint)(&edit)))
+                    if (ImGui.InputScalar($"##long{v.GetHashCode()}", ImGuiDataType.S64, &edit))
                     {
                         commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }
@@ -324,7 +324,7 @@ namespace Editor.Drawers
                 {
                     ImGui.SetNextItemWidth(80);
                     byte edit = v.Value;
-                    if (ImGui.InputScalar($"##byte{v.GetHashCode()}", ImGuiDataType.U8, (nint)(&edit)))
+                    if (ImGui.InputScalar($"##byte{v.GetHashCode()}", ImGuiDataType.U8, &edit))
                     {
                         commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }
@@ -335,7 +335,7 @@ namespace Editor.Drawers
                 {
                     ImGui.SetNextItemWidth(80);
                     ushort edit = v.Value;
-                    if (ImGui.InputScalar($"##ushort{v.GetHashCode()}", ImGuiDataType.U16, (nint)(&edit)))
+                    if (ImGui.InputScalar($"##ushort{v.GetHashCode()}", ImGuiDataType.U16, &edit))
                     {
                         commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }
@@ -346,7 +346,7 @@ namespace Editor.Drawers
                 {
                     ImGui.SetNextItemWidth(80);
                     uint edit = v.Value;
-                    if (ImGui.InputScalar($"##uint{v.GetHashCode()}", ImGuiDataType.U32, (nint)(&edit)))
+                    if (ImGui.InputScalar($"##uint{v.GetHashCode()}", ImGuiDataType.U32, &edit))
                     {
                         commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }
@@ -357,7 +357,7 @@ namespace Editor.Drawers
                 {
                     ImGui.SetNextItemWidth(80);
                     ulong edit = v.Value;
-                    if (ImGui.InputScalar($"##ulong{v.GetHashCode()}", ImGuiDataType.U64, (nint)(&edit)))
+                    if (ImGui.InputScalar($"##ulong{v.GetHashCode()}", ImGuiDataType.U64, &edit))
                     {
                         commandBuffer.Add(v, edit, v.Value, (t, value) => t.Value = value);
                     }

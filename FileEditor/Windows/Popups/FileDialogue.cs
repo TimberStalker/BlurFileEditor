@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text;
-using Editor.Rendering;
-using ImGuiNET;
+using Hexa.NET.ImGui;
+using Pango;
 
 namespace Editor.Windows.Popups
 {

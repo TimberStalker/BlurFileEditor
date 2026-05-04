@@ -8,16 +8,15 @@ using Windows.Win32;
 using Windows.Win32.Storage.FileSystem;
 using Windows.Win32.UI.Shell;
 using GLib;
-using Editor.Rendering;
 
 public sealed class FileIcon
 {
     static Dictionary<int, Texture2D> _icons = [];
-    [SupportedOSPlatform("windows")]
+    [SupportedOSPlatform("windows5.1.2600")]
     unsafe static Texture2D GetIconBitmapWindows(string filePath)
     {
         SHFILEINFOW fileInfo = new();
-        PInvoke.SHGetFileInfo(filePath, FILE_FLAGS_AND_ATTRIBUTES.FILE_ATTRIBUTE_READONLY, &fileInfo, (uint)Marshal.SizeOf(fileInfo), SHGFI_FLAGS.SHGFI_ICON | SHGFI_FLAGS.SHGFI_SMALLICON);
+        PInvoke.SHGetFileInfo(filePath, FILE_FLAGS_AND_ATTRIBUTES.FILE_ATTRIBUTE_READONLY, ref fileInfo, SHGFI_FLAGS.SHGFI_ICON | SHGFI_FLAGS.SHGFI_SMALLICON);
         if(_icons.TryGetValue(fileInfo.iIcon, out var texture))
         {
             return texture;
@@ -66,7 +65,12 @@ public sealed class FileIcon
     public static Texture2D GetIcon(string filePath)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            return GetIconBitmapWindows(filePath);
+        {
+            if (OperatingSystem.IsWindowsVersionAtLeast(5, 1, 2600))
+            {
+                return GetIconBitmapWindows(filePath);
+            }
+        }
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             return GetIconBitmapLinux(filePath);
         throw new NotSupportedException();

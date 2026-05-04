@@ -13,7 +13,8 @@ using Editor.Projects;
 using Editor.Views;
 using Editor.Windows;
 using GLib;
-using ImGuiNET;
+using Hexa.NET.ImGui;
+using Hexa.NET.OpenGL;
 using Pango;
 
 public class XtEditorView : IDynamicView
@@ -42,7 +43,7 @@ public class XtEditorView : IDynamicView
         Project = project;
         Name = Path.GetFileName(file);
     }
-    public bool Draw()
+    public bool Draw(GL gl)
     {
         bool open = true;
         ImGuiWindowFlags flags = ImGuiWindowFlags.NoCollapse;
@@ -50,6 +51,7 @@ public class XtEditorView : IDynamicView
         {
             flags |= ImGuiWindowFlags.UnsavedDocument;
         }
+        //var dlcs = Project.Flask.GlobalXtDatabase.Refs.Where(t => t.Value.Type.IsOfType("DLCBase"));
         if (ImGui.Begin($"{Name}###{File}", ref open, flags))
         {
             if(ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows))
@@ -87,14 +89,6 @@ public class XtEditorView : IDynamicView
             }
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(5, 5));
 
-            int size = LocalDatabase.Refs.Count;
-            XtRefItem[] refs = ArrayPool<XtRefItem>.Shared.Rent(size);
-
-            int index = 0;
-            foreach (var (id, xtRef) in LocalDatabase.Refs)
-            {
-                refs[index++] = new XtRefItem(id, xtRef);
-            }
             ImGui.AlignTextToFramePadding();
             ImGui.Text("Search");
             ImGui.SameLine();
@@ -148,23 +142,32 @@ public class XtEditorView : IDynamicView
 
             if (ImGui.BeginChild("items"))
             {
-                for (int i = 0; i < size; i++)
+                
+                var groups = LocalDatabase.Refs.GroupBy(k => k.Value.Type);
+                foreach (var group in groups)
                 {
-                    XtRefItem item = refs[i];
-                    if(item.XtRef.Handle == createdHandle)
+                    if (ImGui.TreeNodeEx($"{group.Key.Name}"))
                     {
-                        ImGui.SetScrollHereY();
-                        ImGui.SetNextItemOpen(true);
-                        createdHandle = null;
+                        int i = 0;
+                        foreach (var item in group)
+                        {
+                            if(item.Value.Handle == createdHandle)
+                            {
+                                ImGui.SetScrollHereY();
+                                ImGui.SetNextItemOpen(true);
+                                createdHandle = null;
+                            }
+                            ImGui.PushID(i);
+                            var refItem = new XtRefItem(item.Key, item.Value);
+                            XtDrawer.DrawXtItem(Project, refItem, item.Value, commandBuffer, true);
+                            ImGui.PopID();
+                            i++;
+                        }
+                        ImGui.TreePop();
                     }
-                    ImGui.PushID(i);
-                    XtDrawer.DrawXtItem(Project, item, item.XtRef, commandBuffer, true);
-                    ImGui.PopID();
                 }
             }
                 ImGui.EndChild();
-
-            ArrayPool<XtRefItem>.Shared.Return(refs);
 
             ImGui.PopStyleVar();
 

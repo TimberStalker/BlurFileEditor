@@ -3,7 +3,8 @@ using Bufdio;
 using Bufdio.Engines;
 using Bufdio.Players;
 using Editor.Views;
-using ImGuiNET;
+using Hexa.NET.ImGui;
+using Hexa.NET.OpenGL;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,7 +29,7 @@ public class BafEditorView : IDynamicView
         Baf = baf;
         Name = Path.GetFileName(file);
     }
-    public bool Draw()
+    public bool Draw(GL gl)
     {
         bool open = true;
         ImGuiWindowFlags flags = ImGuiWindowFlags.NoCollapse;

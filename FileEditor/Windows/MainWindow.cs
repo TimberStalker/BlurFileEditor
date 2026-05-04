@@ -1,16 +1,13 @@
 ﻿using BlurFileFormats.Audio;
+using BlurFileFormats.Models;
+using BlurFileFormats.Shaders;
 using Editor.Panels;
 using Editor.Projects;
 using Editor.Views;
 using Editor.Windows.Popups;
-using ImGuiNET;
-using Pango;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Hexa.NET.ImGui;
+using Hexa.NET.OpenGL;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Editor.Windows;
 public class MainWindow
@@ -19,9 +16,9 @@ public class MainWindow
     readonly Dictionary<string, IDynamicView> dynamicViews = [];
     readonly List<IView> staticViews;
     readonly List<string> deleteWindowBuffer = [];
-
+    private readonly GL gl;
     Project? activeProject;
-    public MainWindow()
+    public MainWindow(GL gl)
     {
         staticViews = [projectExplorerWindow];
         projectExplorerWindow.OnOpenFile += (sender, file) =>
@@ -29,11 +26,10 @@ public class MainWindow
             if (activeProject is null) return;
             OpenFile(activeProject, file);
         };
+        this.gl = gl;
     }
-    public void Draw(Vector2 windowSize)
+    public void DrawMainMenu()
     {
-        ImGui.SetNextWindowPos(Vector2.Zero, ImGuiCond.Always);
-        ImGui.SetNextWindowSize(windowSize);
         ImGui.BeginMainMenuBar();
         if (ImGui.BeginMenu("File"))
         {
@@ -71,7 +67,8 @@ public class MainWindow
                                 AppSettings.Instance.Save();
                             }
                             projectExplorerWindow.SetDirectory(Path.GetDirectoryName(item));
-                        } catch(Exception ex)
+                        }
+                        catch (Exception ex)
                         {
                             Console.WriteLine($"Failed to open project {item}: {ex}");
                         }
@@ -92,6 +89,11 @@ public class MainWindow
             ImGui.EndMenu();
         }
         ImGui.EndMainMenuBar();
+    }
+    public void Draw(Vector2 windowSize)
+    {
+        DrawMainMenu();
+        //ImGui.SetNextWindowSize(windowSize);
         if (FileDialogue.OpenFile("standaloneOpen", out string file))
         {
             Console.WriteLine(file);
@@ -120,17 +122,17 @@ public class MainWindow
             AppSettings.Instance.Save();
             projectExplorerWindow.SetDirectory(dir);
         }
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.5f);
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.5f);
-        ImGui.SetNextWindowPos(Vector2.Zero, ImGuiCond.Always);
-        ImGui.SetNextWindowSize(windowSize, ImGuiCond.Always);
-        ImGui.Begin("DOCK-SPACE TEST", ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoTitleBar |
-                                       ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove |
-                                       ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoNavFocus);
-        ImGui.PopStyleVar(2);
-        ImGui.DockSpace(ImGui.GetID("Dockspace"));
+        //ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.5f);
+        //ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.5f);
+        //ImGui.SetNextWindowPos(Vector2.Zero, ImGuiCond.Always);
+        //ImGui.SetNextWindowSize(windowSize, ImGuiCond.Always);
+        //ImGui.Begin("DOCK-SPACE TEST", ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoTitleBar |
+        //                               ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove |
+        //                               ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoNavFocus);
+        //ImGui.PopStyleVar(2);
+        //ImGui.DockSpace(ImGui.GetID("Dockspace"));
 
-        ImGui.End();
+        //ImGui.End();
 
         foreach (var item in staticViews)
         {
@@ -138,7 +140,7 @@ public class MainWindow
         }
         foreach (var (id, item) in dynamicViews)
         {
-            if(!item.Draw())
+            if(!item.Draw(gl))
             {
                 deleteWindowBuffer.Add(id);
             }
@@ -171,6 +173,16 @@ public class MainWindow
                     var baf = Baf.Parse(filePath);
                     BafEditorView bafEditor = new(filePath, baf);
                     AddDynamicView(bafEditor);
+                    break;
+                case ".model":
+                    var model = CPModelSerializer.Import(filePath);
+                    ModelView modelView = new(gl, model, activeProject!, filePath);
+                    AddDynamicView(modelView);
+                    break;
+                case ".fxb":
+                    var fxb = FXBSerializer.Import(filePath);
+                    FXBView fxbView = new(gl, fxb, filePath);
+                    AddDynamicView(fxbView);
                     break;
             }
         } catch(Exception ex)

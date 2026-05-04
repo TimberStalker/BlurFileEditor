@@ -1,17 +1,19 @@
-﻿using BlurFileFormats.SerializationFramework;
-using DirectXTexNet;
-using Editor.OpenGL;
-using Editor.Rendering;
-using ImGuiNET;
-using Pango;
-using SkiaSharp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using BlurFileFormats.SerializationFramework;
+using DirectXTexNet;
+using Editor.OpenGL;
+using Hexa.NET.ImGui;
+using Hexa.NET.ImGui.Backends.Vulkan;
+using Hexa.NET.OpenGL;
+using Pango;
+using SkiaSharp;
+using static OpenGL;
 
 namespace Editor.Windows;
 public class ImageWindow : GuiWindow, IDisposable
@@ -32,9 +34,9 @@ public class ImageWindow : GuiWindow, IDisposable
         {
             var size = ImGui.GetWindowSize();
             var minSize = MathF.Min(size.X, size.Y);
-            ImGui.Image(texture, new System.Numerics.Vector2(minSize, minSize));
+            ImGui.Image(texture, new Vector2(minSize, minSize));
         }
-            ImGui.End();
+        ImGui.End();
         return open;
     }
 
@@ -134,8 +136,13 @@ public class DirectXImageWindow : GuiWindow, IDisposable
                     }
                 }
 
-                int width = texture.Width;
-                int height = texture.Height;
+                int width;
+                int height;
+                using(var tex = texture.Bind())
+                {
+                    width = tex.Width;
+                    height = tex.Height;
+                }
 
                 if (width >= height)
                 {
@@ -187,34 +194,32 @@ public class DirectXImageWindow : GuiWindow, IDisposable
             texture = CubemapTexture.CreateFromBitmaps(bitmaps);
 
 
-            GL.glGenVertexArrays(1, out vao);
-            GL.glBindVertexArray(vao);
+            vao = GL3.GenVertexArray();
+            GL3.BindVertexArray(vao);
+
+            vbo = GL3.GenBuffer();
+            GL3.BindBuffer(GLBufferTargetARB.ArrayBuffer, vbo);
+            GL3.BufferData(GLBufferTargetARB.ArrayBuffer, sizeof(float) * skyboxVertices.Length, skyboxVertices.AsSpan(), GLBufferUsageARB.StaticDraw); 
+            GL3.VertexAttribPointer(0, 3, GLVertexAttribPointerType.Float, false, 0, 0);
+            GL3.EnableVertexAttribArray(0);
             
-            GL.glGenBuffers(1, out vbo);
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo);
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, (ulong)(sizeof(float) * skyboxVertices.Length), skyboxVertices, GL.GL_STATIC_DRAW); 
-            GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, false, 0, 0);
-            GL.glEnableVertexAttribArray(0);
-            
-            GL.glBindVertexArray(0);
+            GL3.BindVertexArray(0);
             
             shader = Shader.Create(Path.Combine(Environment.CurrentDirectory, "Shaders", "skybox"));
-            
-            frameBuffer = new FrameBuffer();
-            GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, frameBuffer);
-            
+
             renderTexture = new Texture2D();
-            GL.glBindTexture(GL.GL_TEXTURE_2D, renderTexture);
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB, 1, 1, 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, 0);
-            frameBuffer.AttacthTexture(renderTexture);
-            if (GL.glCheckFramebufferStatus(GL.GL_FRAMEBUFFER) != GL.GL_FRAMEBUFFER_COMPLETE)
+            using (var tex = renderTexture.Bind())
             {
-                throw new Exception("Cubemap framebuffer is not complete");
+                tex.MinFilter = GLTextureMinFilter.Linear;
+                tex.MagFilter = GLTextureMagFilter.Linear;
+                GL3.TexImage2D(GLTextureTarget.Texture2D, 0, GLInternalFormat.Rgb, 1, 1, 0, GLPixelFormat.Rgb, GLPixelType.UnsignedByte, 0);
             }
-            GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
-            
+
+            frameBuffer = new FrameBuffer();
+            using(var fb = frameBuffer.Bind())
+            {
+                fb.AttachTexture(GLFramebufferAttachment.ColorAttachment0, renderTexture);
+            }
         }
         Vector2 lastSize;
         Vector2 padding = new Vector2(20, 20);
@@ -226,8 +231,8 @@ public class DirectXImageWindow : GuiWindow, IDisposable
                 var size = ImGui.GetWindowSize() - padding;
                 if(lastSize != size)
                 {
-                    GL.glBindTexture(GL.GL_TEXTURE_2D, renderTexture);
-                    GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB, (int)size.X, (int)size.Y, 0, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, 0);
+                    GL3.BindTexture(GLTextureTarget.Texture2D, renderTexture);
+                    GL3.TexImage2D(GLTextureTarget.Texture2D, 0, GLInternalFormat.Rgb, (int)size.X, (int)size.Y, 0, GLPixelFormat.Rgb, GLPixelType.UnsignedByte, 0);
                     lastSize = size;
                 }
                 var minSize = MathF.Max(MathF.Min(size.X, size.Y) - 60, 80);
@@ -250,8 +255,14 @@ public class DirectXImageWindow : GuiWindow, IDisposable
 
                 var drawList = ImGui.GetWindowDrawList();
 
-                int width = texture.Width;
-                int height = texture.Height;
+                int width;
+                int height;
+
+                using(var tex = texture.Bind())
+                {
+                    width = tex.Width;
+                    height = tex.Height;
+                }
 
                 if (width >= height)
                 {
@@ -272,26 +283,26 @@ public class DirectXImageWindow : GuiWindow, IDisposable
                 var perspective = Matrix4x4.CreatePerspectiveFieldOfView(fov, size.X/size.Y, 0.1f, 100f);
             
             
-                GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, frameBuffer);
-                GL.glClipControl(GL.GL_LOWER_LEFT, GL.GL_NEGATIVE_ONE_TO_ONE);
-                GL.glActiveTexture(GL.GL_TEXTURE0);
-                GL.glBindTexture(GL.GL_TEXTURE_CUBE_MAP, texture);
+                GL3.BindFramebuffer(GLFramebufferTarget.Framebuffer, frameBuffer);
+                //GL3.ClipControl(GL.GL_LOWER_LEFT, GL.GL_NEGATIVE_ONE_TO_ONE);
+                GL3.ActiveTexture(GLTextureUnit.Texture0);
+                GL3.BindTexture(GLTextureTarget.CubeMap, texture);
                 shader.Use();
                 shader.SetMatrix("projection", perspective);
                 shader.SetMatrix("view", viewMatrix);
                 shader.SetInt("skybox", 0);
             
-                GL.glBindVertexArray(vao);
+                GL3.BindVertexArray(vao);
             
-                GL.glDisable(GL.GL_DEPTH_TEST);
-                GL.glViewport(0, 0, (int)size.X, (int)size.Y);
-                GL.glClearColor(0, 0, 0, 1);
-                GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
-                GL.glDrawArrays(GL.GL_TRIANGLES, 0, 36);
+                GL3.Disable(GLEnableCap.DepthTest);
+                GL3.Viewport(0, 0, (int)size.X, (int)size.Y);
+                GL3.ClearColor(0, 0, 0, 1);
+                GL3.Clear(GLClearBufferMask.ColorBufferBit | GLClearBufferMask.DepthBufferBit);
+                GL3.DrawArrays(GLPrimitiveType.Triangles, 0, 36);
             
-                GL.glUseProgram(0);
-                GL.glBindVertexArray(0);
-                GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
+                GL3.UseProgram(0);
+                GL3.BindVertexArray(0);
+                GL3.BindFramebuffer(GLFramebufferTarget.Framebuffer, 0);
 
                 ImGui.SetCursorPos(halfPadding);
                 ImGui.Image(renderTexture, new Vector2(size.X, size.Y));
@@ -301,8 +312,8 @@ public class DirectXImageWindow : GuiWindow, IDisposable
 
         public void Dispose()
         {
-            GL.glDeleteFramebuffers(1, frameBuffer);
-            GL.glDeleteTextures(1, texture);
+            frameBuffer.Dispose();
+            texture.Dispose();
             renderTexture.Dispose();
         }
 

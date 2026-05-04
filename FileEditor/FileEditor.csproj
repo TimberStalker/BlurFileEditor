@@ -1,7 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>12</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -18,20 +19,6 @@
     <NoWarn>1701;1702;IL2121;CS8601;IL2121;CS8625</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="./libs/GLFW/Linux/x64/libglfw.so.3.3">
-      <Link>runtimes/linux-x64/native/libglfw.so.3.3</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="./libs/GLFW/Windows/x64/glfw3.dll">
-      <Link>runtimes/win-x64/native/glfw3.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="./libs/GLFW/Windows/x86/glfw3.dll">
-      <Link>runtimes/win-x86/native/glfw3.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <None Remove="runtimes\**" />
   </ItemGroup>
   <ItemGroup>
@@ -39,17 +26,28 @@
     <PackageReference Include="DirectXTexNet" Version="1.0.7" />
     <PackageReference Include="GdkSharp" Version="3.24.24.95" />
     <PackageReference Include="GioSharp" Version="3.24.24.95" />
-    <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.6" />
-    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.183">
+    <PackageReference Include="Hexa.NET.GLFW" Version="1.0.5" />
+    <PackageReference Include="Hexa.NET.ImGui" Version="2.2.9" />
+    <PackageReference Include="Hexa.NET.ImGui.Backends" Version="1.0.18" />
+    <PackageReference Include="Hexa.NET.ImGui.Backends.GLFW" Version="1.0.18" />
+    <PackageReference Include="Hexa.NET.ImGui.Widgets" Version="1.2.15" />
+    <PackageReference Include="Hexa.NET.OpenGL.ARB" Version="1.1.0" />
+    <PackageReference Include="Hexa.NET.OpenGL.Core" Version="1.1.0" />
+    <PackageReference Include="Hexa.NET.OpenGL4" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Direct3D.DXC" Version="1.9.2602.17" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.264">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="SkiaSharp" Version="3.119.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.0" />
-    <PackageReference Include="System.Drawing.Common" Version="9.0.6" />
+    <PackageReference Include="NLua" Version="1.7.8" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.1" />
+    <PackageReference Include="Vortice.Dxc" Version="3.8.2" />
+    <PackageReference Include="Vortice.SpirvCross" Version="1.5.4" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="runtimes\**" />
@@ -59,9 +57,22 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\BlurFileFormats\BlurFileFormats.csproj" />
+    <ProjectReference Include="..\..\HlslDecompiler\HlslDecompiler.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="libs\HLSLcc\hlslcc.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="libs\PortAudio\Windows\libportaudio.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\Fonts\Roboto-Bold.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\Fonts\Roboto-Light.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\Fonts\Roboto-Regular.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\skybox.frag">
